@@ -404,10 +404,12 @@
 1136 print#3,s$
 1137 close 3:close 15
 1138 return
-1150 open 4,8,4,"hamlog.que,s,a"
-1152 print#4,nc$;",";nb$;",";nm$;",";nf$;",";nd$;",";nt$;",";rs$;",";rr$;",";co$;",";rc
-1153 close 4
-1154 return
+1150 open 15,8,15:open 4,8,4,"hamlog.que,s,a"
+1151 input#15,en,em$,et$,es$:if en=0 then 1155
+1152 close 4:open 4,8,4,"hamlog.que,s,w"
+1155 print#4,nc$;",";nb$;",";nm$;",";nf$;",";nd$;",";nt$;",";rs$;",";rr$;",";co$;",";rc
+1156 close 4:close 15
+1157 return
 1170 cm$="add,"+nc$+","+nb$+","+nm$+","+nf$+","+nd$+","+nt$+","+rs$+","+rr$+","+co$
 1171 gosub 2000
 1172 gosub 2010
@@ -427,7 +429,7 @@
 1192 close 3:open 3,8,3,su$:print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 1193 input#3,s$:s$=left$(s$,36)+"s"+mid$(s$,38):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1):print#3,s$:close 3:close 15
 1194 pq=pq-1:if pq<0 then pq=0
-1195 print "  synced! logid: ";lg$
+1195 li$=lg$:print "  synced! logid: ";lg$
 1196 return
 1200 print "  looking up ";nc$;"..."
 1201 cm$="lookup,"+nc$
@@ -534,24 +536,26 @@
 1543 if sc=1 then gosub 200:goto 102
 1544 sc=0:gosub 500:goto 102
 1550 print " uploading ";pq;" pending qsos..."
-1551 open 4,8,4,"hamlog.que,s,r"
-1552 uq=0
-1554 if st and 64 then 1580
+1551 open 15,8,15:open 4,8,4,"hamlog.que,s,r"
+1552 input#15,en,em$,et$,es$
+1553 if en>0 then close 4:close 15:goto 1580
+1554 uq=0
 1555 input#4,qc$,qb$,qm$,qf$,qd$,qt$,qs$,qr$,qo$,qn$
-1556 if st and 64 then 1580
+1556 ef=(st and 64)
 1558 cm$="add,"+qc$+","+qb$+","+qm$+","+qf$+","+qd$+","+qt$+","+qs$+","+qr$+","+qo$
 1559 gosub 2000:gosub 2010
 1560 if left$(rl$,7)="!add,ok" then uq=uq+1:print " synced: ";qc$
 1561 if left$(rl$,7)<>"!add,ok" then print " failed: ";qc$
-1563 rn=val(qn$):if rn>0 and left$(rl$,7)="!add,ok" then gosub 1590
-1564 goto 1554
-1580 close 4
+1563 rn=val(qn$):if rn>0 and left$(rl$,7)="!add,ok" then close 15:gosub 1590:open 15,8,15
+1564 if ef then 1580
+1565 goto 1555
+1580 close 4:close 15
 1581 pq=pq-uq:if pq<0 then pq=0
 1582 print " uploaded: ";uq;" qsos"
 1584 if pq=0 then open 15,8,15,"s0:hamlog.que":close 15
 1585 gosub 2460
 1586 return
-1590 lg$=mid$(rl$,9)
+1590 lg$=mid$(rl$,9):li$=lg$
 1591 open 15,8,15
 1592 open 3,8,3,da$
 1593 lo=rn and 255:hi=int(rn/256)
@@ -590,7 +594,7 @@
 1760 if left$(rl$,4)<>"!log" then print " sync failed: ";rl$:goto 1795
 1761 sn=val(mid$(rl$,6))
 1762 print " received ";sn;" qsos from qrz"
-1763 if sn=0 then gosub 2010:goto 1795
+1763 if sn=0 then gosub 2010:goto 1796
 1765 open 15,8,15:open 3,8,3,da$:open 5,8,5,su$
 1766 sa=0:for si=1 to sn
 1767 gosub 2010:gosub 240
@@ -615,16 +619,17 @@
 1789 print#3,left$(w$,83):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85):print#3,mid$(w$,84)
 1790 s$=left$(p2$+"          ",10)+left$(p3$+"    ",4)+left$(p4$+"    ",4)+left$(p6$+"        ",8)+left$(p7$+"    ",4)+"599599s  "
 1791 print#15,"p"+chr$(5)+chr$(lo)+chr$(hi)+chr$(1):print#5,s$
-1792 print#2,"k"+chr$(13);:if sa/10=int(sa/10) then print " stored ";sa;" of ";sn
-1793 next si:close 3:close 5:close 15
-1794 gosub 2010
-1795 gosub 2460
-1796 print
-1797 print " sync complete: ";sa;" qsos added"
-1798 print " total records: ";rc
-1799 print:print " press any key..."
-1800 get w$:if w$="" then 1800
-1801 sc=0:gosub 500:goto 102
+1792 if si<sn then print#2,"k"+chr$(13);
+1793 if sa/10=int(sa/10) then print " stored ";sa;" of ";sn
+1794 next si:close 3:close 5:close 15
+1795 print#2,"k"+chr$(13);:gosub 2010
+1796 gosub 2460
+1797 print
+1798 print " sync complete: ";sa;" qsos added"
+1799 print " total records: ";rc
+1800 print:print " press any key..."
+1801 get w$:if w$="" then 1801
+1802 sc=0:gosub 500:goto 102
 1900 if rc=0 then return
 1904 open 15,8,15
 1905 open 3,8,3,su$
@@ -718,8 +723,8 @@
 2483 input#15,en,em$,et$,es$
 2484 if en<>0 then close 4:close 15:return
 2485 if st and 64 then 2490
-2486 input#4,qc$
-2487 if st and 64 then 2490
+2486 input#4,qc$,qb$,qm$,qf$,qd$,qt$,qs$,qr$,qo$,qn$
+2487 if st and 64 then pq=pq+1:goto 2490
 2488 pq=pq+1:goto 2485
 2490 close 4:close 15
 2491 return

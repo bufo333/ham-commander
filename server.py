@@ -229,7 +229,7 @@ class QRZLogbookApi:
 # ── Local ADIF File Loader ─────────────────────────────────────
 
 def load_local_adif():
-    """Load QSO records from a local ADIF file for offline testing."""
+    """Load QSO records from a local ADIF file."""
     if not os.path.exists(ADIF_FILE):
         return []
     try:
@@ -241,6 +241,31 @@ def load_local_adif():
     except Exception as e:
         log.warning("Failed to load ADIF file %s: %s", ADIF_FILE, e)
         return []
+
+
+def save_local_adif(fields):
+    """Append a QSO record to the local ADIF file and return a log ID.
+
+    If the file doesn't exist, create it with an ADIF header.
+    The log ID is the sequential record number (1-based).
+    """
+    # Count existing records to determine next log ID
+    existing = load_local_adif()
+    logid = len(existing) + 1
+    fields["app_qrzlog_logid"] = str(logid)
+
+    rec = adif_record(**fields)
+
+    # Create file with header if it doesn't exist
+    if not os.path.exists(ADIF_FILE):
+        with open(ADIF_FILE, "w", encoding="latin-1") as f:
+            f.write("ADIF export from Ham Commander\n<eoh>\n")
+
+    with open(ADIF_FILE, "a", encoding="latin-1") as f:
+        f.write(rec + "\n")
+
+    log.info("Saved QSO #%d to %s: %s", logid, ADIF_FILE, fields.get("call", "?"))
+    return logid
 
 
 # ── CSV Helpers ────────────────────────────────────────────────
@@ -559,15 +584,11 @@ class ClientHandler:
     # ── ADD ─────────────────────────────────────────────────────
 
     async def cmd_add(self, args):
-        """Add a QSO to the QRZ logbook.
+        """Add a QSO to the QRZ logbook or local ADIF file.
 
         ADD,call,band,mode,freq,date,time,rsts,rstr,comment
         Response: !ADD,OK,logid  or  !ADD,ERR,reason
         """
-        if not self.qrz_log:
-            await self.send("!ADD,ERR,QRZ LOGBOOK NOT CONFIGURED")
-            return
-
         if len(args) < 8:
             await self.send("!ADD,ERR,TOO FEW FIELDS")
             return
@@ -599,19 +620,27 @@ class ClientHandler:
         if comment:
             fields["comment"] = comment
 
-        rec = adif_record(**fields)
-
-        try:
-            resp = await self.qrz_log.insert(self.http, rec)
-            result = resp.get("RESULT", "")
-            if result in ("OK", "REPLACE"):
-                logid = resp.get("LOGID", "0")
+        if self.qrz_log:
+            # Upload to QRZ logbook
+            rec = adif_record(**fields)
+            try:
+                resp = await self.qrz_log.insert(self.http, rec)
+                result = resp.get("RESULT", "")
+                if result in ("OK", "REPLACE"):
+                    logid = resp.get("LOGID", "0")
+                    await self.send(f"!ADD,OK,{logid}")
+                else:
+                    reason = resp.get("REASON", "UNKNOWN ERROR")
+                    await self.send(f"!ADD,ERR,{sanitize_csv(reason)}")
+            except Exception as e:
+                await self.send(f"!ADD,ERR,{sanitize_csv(str(e))}")
+        else:
+            # Save to local ADIF file
+            try:
+                logid = save_local_adif(fields)
                 await self.send(f"!ADD,OK,{logid}")
-            else:
-                reason = resp.get("REASON", "UNKNOWN ERROR")
-                await self.send(f"!ADD,ERR,{sanitize_csv(reason)}")
-        except Exception as e:
-            await self.send(f"!ADD,ERR,{sanitize_csv(str(e))}")
+            except Exception as e:
+                await self.send(f"!ADD,ERR,{sanitize_csv(str(e))}")
 
     # ── SYNC ────────────────────────────────────────────────────
 
@@ -721,7 +750,7 @@ async def main():
     if not QRZ_USER:
         log.warning("QRZ_USERNAME not set — callsign lookups disabled")
     if not QRZ_API_KEY:
-        log.warning("QRZ_API_KEY not set — logbook operations disabled")
+        log.info("QRZ_API_KEY not set — using local ADIF file: %s", ADIF_FILE)
     async with server:
         await server.serve_forever()
 
