@@ -42,7 +42,7 @@ def main():
                         help="Skip last N records (for sync testing)")
     parser.add_argument("--callsign", default="N0CALL", help="Station callsign")
     parser.add_argument("--name", default="", help="Operator name")
-    parser.add_argument("--grid", default="EL95tn", help="Grid square")
+    parser.add_argument("--grid", default="", help="Grid square")
     parser.add_argument("--server", default="127.0.0.1", help="Server IP")
     parser.add_argument("--port", default="6400", help="Server port")
     parser.add_argument("--baud", default="1200", help="Baud rate")
