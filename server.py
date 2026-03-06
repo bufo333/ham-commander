@@ -376,8 +376,22 @@ class ClientHandler:
                 return
 
             # Apply filters
+            now = datetime.now(timezone.utc)
             filtered = []
             for spot in spots:
+                # Skip spots older than 5 minutes
+                spot_time_str = spot.get("spotTime", "")
+                if spot_time_str:
+                    try:
+                        st = datetime.fromisoformat(spot_time_str.replace("Z", "+00:00"))
+                        if st.tzinfo is None:
+                            st = st.replace(tzinfo=timezone.utc)
+                        age = (now - st).total_seconds()
+                        if age > 300:
+                            continue
+                    except (ValueError, TypeError):
+                        pass
+
                 freq = sanitize_csv(str(spot.get("frequency", "")))[:10]
                 mode = sanitize_csv(str(spot.get("mode", ""))).upper()[:6]
                 band = freq_to_band(freq)
@@ -398,7 +412,7 @@ class ClientHandler:
                     f"{park_name},{location},{grid}"
                 )
 
-            filtered = filtered[:5]
+            filtered = filtered[:20]
             await self.send(f"!SPOTS,{len(filtered)}")
             for line in filtered:
                 await self.send(line)
