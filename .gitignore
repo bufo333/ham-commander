@@ -1,0 +1,9 @@
+.env
+.DS_Store
+__pycache__/
+*.pyc
+hamlog.d81
+hamlog.d64
+c64_hamlog.prg
+/tmp/
+.claude/
