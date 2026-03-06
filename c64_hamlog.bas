@@ -6,7 +6,7 @@
 15 sv$="127.0.0.1":pt$="6400"
 16 mc$="n0call":bd$="1200"
 17 mn$="":mg$=""
-18 ol=0:sc=0:rc=0:li$="0":pq=0:sp=0:lp=0:sl=0:fi=0
+18 ol=0:sc=0:rc=0:li$="0":pq=0:sp=0:lp=0:sl=0:fi=0:sf=0:sr=0:dc=0
 19 fb$="":fm$=""
 28 ut$="00000000":uh$="0000"
 29 s9$="                                                                                   "
@@ -24,11 +24,11 @@
 56 if mn$<>"" then print " op name: ";mn$
 57 if mg$<>"" then print "    grid: ";mg$
 58 print "  server: ";sv$;":";pt$
-59 print " records: ";rc
+59 print " records: ";rc-dc
 60 if pq>0 then print " pending: ";pq
 61 print
-62 print " enter utc date (yyyymmdd):"
-63 input " [enter=skip] ";td$
+62 print " utc date yyyymmdd (enter=skip):"
+63 input " ";td$
 64 if td$<>"" then ut$=td$
 65 if td$<>"" then print " enter utc time (hhmm):"
 66 if td$<>"" then input " ";th$:uh$=th$
@@ -50,21 +50,27 @@
 122 if k$=chr$(137) and sc=1 then gosub 1300:goto 102
 124 if k$=chr$(139) and ol=1 then goto 1750
 126 if k$=chr$(138) then gosub 2600:goto 102
-128 if k$="d" and sc=3 then gosub 843:goto 102
+128 if k$="d" and sc=3 and sf=0 then gosub 843:goto 102
+129 if k$="s" and sc=0 and rc>0 then gosub 700:goto 102
 130 if k$="+" and sc=0 then gosub 575:goto 102
 131 if k$="-" and sc=0 then gosub 577:goto 102
 132 goto 102
 150 if sc=0 then gosub 561:return
 151 if sc=1 then gosub 260:return
-152 return
+152 if sc=4 then gosub 760:return
+153 return
 160 if sc=0 then gosub 571:return
 161 if sc=1 then gosub 270:return
-162 return
+162 if sc=4 then gosub 770:return
+163 return
 170 if sc=0 then gosub 580:return
 171 if sc=1 then gosub 280:return
-172 return
-180 if sc=3 then sc=0:gosub 500:return
-181 return
+172 if sc=4 then gosub 780:return
+173 return
+180 if sc=3 and sf=1 then sf=0:sc=4:gosub 735:return
+181 if sc=3 then sc=0:gosub 500:return
+182 if sc=4 then sc=0:gosub 500:return
+183 return
 200 if ol=0 then gosub 2200
 203 if ol=0 then print:print "  go online for spots (f7)"
 204 if ol=0 then gosub 2260:return
@@ -86,7 +92,8 @@
 222 ca$(i)=p1$:fq$(i)=p2$:mo$(i)=p3$
 223 rf$(i)=p4$
 224 sd$(i)=p5$+"|"+p6$+"|"+p7$
-225 next i
+225 print#2,"k"+chr$(13);
+226 next i
 227 gosub 2010
 229 gosub 290
 231 sl=0:gosub 300
@@ -156,7 +163,7 @@
 504 st$=""
 505 if ol=1 then st$="online"
 506 if ol=0 then st$="offline"
-507 st$=st$+" | "+str$(rc)+" qsos"
+507 st$=st$+" | "+str$(rc-dc)+" qsos"
 508 if pq>0 then st$=st$+" | pend:"+str$(pq)
 509 print left$(st$,40)
 510 print chr$(154);h$;chr$(5)
@@ -166,9 +173,6 @@
 516 gosub 540
 517 return
 540 gosub 2200:gosub 2220
-542 pg=lp*19
-544 pc=19:if pg+pc>rc then pc=rc-pg
-545 if pc<0 then pc=0
 546 for i=0 to vw-1
 547 if i>=pc then print:goto 555
 548 if i=sl then print chr$(158);chr$(18);
@@ -178,18 +182,17 @@
 553 print
 555 next i
 556 print chr$(154);h$;chr$(5)
-557 print chr$(155);" pg ";lp+1;" enter=dtl +/-=page ";chr$(17);chr$(145);"=scroll";chr$(5)
+557 print chr$(155);" pg ";lp+1;" s=find ent=dtl +/-pg ";chr$(17);chr$(145);"=scrl";chr$(5)
 558 gosub 2260
 559 return
-561 pg=lp*19:pc=19:if pg+pc>rc then pc=rc-pg
-562 if pc<1 then return
+561 if pc<1 then return
 563 if sl<pc-1 then os=sl:sl=sl+1:gosub 600:return
-565 if (lp+1)*19<rc then lp=lp+1:gosub 1900:sl=0:gosub 540
+565 if pc>=19 then lp=lp+1:gosub 1900:sl=0:gosub 540
 566 return
 571 if sl>0 then os=sl:sl=sl-1:gosub 600:return
 573 if lp>0 then lp=lp-1:gosub 1900:sl=18:gosub 540
 574 return
-575 if (lp+1)*19<rc then lp=lp+1:gosub 1900:sl=0:gosub 540
+575 if pc>=19 then lp=lp+1:gosub 1900:sl=0:gosub 540
 576 return
 577 if lp>0 then lp=lp-1:gosub 1900:sl=0:gosub 540
 578 return
@@ -211,9 +214,52 @@
 605 i=sl:gosub 590:poke 214,sl+1:print
 606 print chr$(158);chr$(18);left$(ln$+"                                        ",39);chr$(146);chr$(5);
 607 return
+700 gosub 2200
+701 sc=4:print " search by callsign:"
+702 print:input " search: ";sq$
+703 if sq$="" then sc=0:gosub 500:return
+704 print " searching ";rc;" records..."
+705 sr=0
+706 open 15,8,15:open 3,8,3,su$
+707 for rn=1 to rc
+708 if sr>=20 then 718
+709 lo=rn and 255:hi=int(rn/256)
+710 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
+711 input#3,w$
+712 if left$(w$,len(sq$))<>sq$ then 718
+713 sr=sr+1:fx(sr)=rn
+714 xc$(sr)=left$(w$,10)
+715 xb$(sr)=mid$(w$,11,4)+"|"+mid$(w$,15,4)+"|"
+716 xd$(sr)=mid$(w$,19,8)+"|"+mid$(w$,27,4)
+717 xr$(sr)=mid$(w$,31,3)+"|"+mid$(w$,34,3)
+718 next rn
+719 close 3:close 15
+720 if sr=0 then print " no matches.":for w=1 to 1000:next w:sc=0:gosub 500:return
+732 sl=0:gosub 735:return
+735 gosub 2200
+736 print chr$(159);" search: ";sq$;" (";right$(str$(sr),len(str$(sr))-1);" found)";chr$(5)
+737 print chr$(154);h$;chr$(5)
+738 for i=0 to 18
+739 if i>=sr then print:goto 744
+740 if i=sl then print chr$(158);chr$(18);
+741 gosub 590
+742 print ln$;
+743 if i=sl then print chr$(146);chr$(5);
+744 print:next i
+745 print chr$(154);h$;chr$(5)
+746 print chr$(155);" enter=detail  del=back";chr$(5)
+747 gosub 2260:return
+760 if sl<sr-1 and sl<18 then os=sl:sl=sl+1:gosub 600
+761 return
+770 if sl>0 then os=sl:sl=sl-1:gosub 600
+771 return
+780 if sr=0 then return
+781 rn=fx(sl+1):if rn<1 then return
+782 gosub 2200:print "  loading detail..."
+783 sf=1:sc=3:gosub 806:return
 800 gosub 2200
 803 print "  loading detail..."
-805 rn=rc-lp*19-sl
+805 rn=fx(sl+1)
 806 open 15,8,15
 807 open 3,8,3,da$
 808 lo=rn and 255:hi=int(rn/256)
@@ -253,23 +299,25 @@
 847 print "  y=delete  n=cancel"
 848 get w$:if w$="" then 848
 849 if w$<>"y" then sc=3:gosub 800:return
-851 rn=rc-lp*19-sl:gosub 890:return
+851 rn=fx(sl+1):gosub 890:return
 890 open 15,8,15
 891 open 3,8,3,da$
 892 lo=rn and 255:hi=int(rn/256)
 893 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 894 input#3,a$:print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85)
 895 input#3,b$:if len(b$)<83 then b$=left$(s9$,83-len(b$))+b$
-896 w$=a$+b$:w$=left$(w$,76)+"d"+mid$(w$,78)
+896 w$=a$+b$:of$=mid$(w$,77,1):w$=left$(w$,76)+"d"+mid$(w$,78)
 897 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 898 print#3,left$(w$,83):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85):print#3,mid$(w$,84)
 899 close 3:open 3,8,3,su$
 900 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 901 input#3,w$:w$=left$(w$,36)+"d"+mid$(w$,38):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1):print#3,w$
 902 close 3:close 15
-903 print "  qso deleted."
-904 for w=1 to 500:next w
-905 sc=0:gosub 500:return
+903 dc=dc+1:if of$="n" or of$="p" then pq=pq-1:if pq<0 then pq=0
+904 gosub 2460
+905 print "  qso deleted."
+906 for w=1 to 500:next w
+907 sc=0:gosub 500:return
 1000 gosub 2200
 1003 print "  new qso entry"
 1004 print chr$(154);h$;chr$(5)
@@ -286,10 +334,10 @@
 1020 if nf$<>"" then print "  freq khz: ";nf$
 1021 print
 1023 nd$=ut$:nt$=uh$
-1024 print "  date [";nd$;"]: ";
+1024 print "  date yyyymmdd [";nd$;"]: ";
 1025 input "";td$
 1026 if td$<>"" then nd$=td$
-1027 print "  time [";nt$;"]: ";
+1027 print "  time hhmm [";nt$;"]: ";
 1028 input "";tt$
 1029 if tt$<>"" then nt$=tt$
 1031 rs$="599":rr$="599"
@@ -468,7 +516,6 @@
 1519 print
 1521 cm$="hello":gosub 2000
 1522 gosub 2010
-1523 goto 1524
 1524 if left$(rl$,3)<>"!ok" then print " connection failed":goto 1540
 1526 gosub 240
 1529 ut$=p4$:uh$=p5$
@@ -581,19 +628,20 @@
 1900 if rc=0 then return
 1904 open 15,8,15
 1905 open 3,8,3,su$
-1906 ps=lp*19
-1907 pc=19:if ps+pc>rc then pc=rc-ps
-1908 if pc<1 then close 3:close 15:return
-1909 for i=1 to pc
-1910 rn=rc-ps-i+1
-1911 lo=rn and 255:hi=int(rn/256)
-1912 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
-1913 input#3,w$
-1915 xc$(i)=left$(w$,10)
-1916 xb$(i)=mid$(w$,11,4)+"|"+mid$(w$,15,4)+"|"
-1917 xd$(i)=mid$(w$,19,8)+"|"+mid$(w$,27,4)
-1918 xr$(i)=mid$(w$,31,3)+"|"+mid$(w$,34,3)
-1920 next i
+1906 pc=0:sk=0
+1907 for j=rc to 1 step -1
+1908 lo=j and 255:hi=int(j/256)
+1909 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
+1910 input#3,w$
+1911 if mid$(w$,37,1)="d" then 1920
+1912 if sk<lp*19 then sk=sk+1:goto 1920
+1913 pc=pc+1:fx(pc)=j
+1914 xc$(pc)=left$(w$,10)
+1915 xb$(pc)=mid$(w$,11,4)+"|"+mid$(w$,15,4)+"|"
+1916 xd$(pc)=mid$(w$,19,8)+"|"+mid$(w$,27,4)
+1917 xr$(pc)=mid$(w$,31,3)+"|"+mid$(w$,34,3)
+1918 if pc>=19 then j=1
+1920 next j
 1921 close 3:close 15
 1922 return
 2000 print#2,cm$+chr$(13);
@@ -613,12 +661,13 @@
 2207 if sc=0 then print chr$(154);chr$(18);"  qso log ";chr$(146);
 2208 if sc=2 then print chr$(154);chr$(18);"  new qso ";chr$(146);
 2209 if sc=3 then print chr$(154);chr$(18);"  qso detail ";chr$(146);
+2210 if sc=4 then print chr$(154);chr$(18);"  search ";chr$(146);
 2211 print chr$(154);chr$(18);" de ";mc$;" ";chr$(146)
 2212 print chr$(5);:return
 2220 st$=""
 2221 if ol=1 then st$="online"
 2222 if ol=0 then st$="offline"
-2223 st$=st$+" | "+str$(rc)+" qsos"
+2223 st$=st$+" | "+str$(rc-dc)+" qsos"
 2224 if pq>0 then st$=st$+" | pend:"+str$(pq)
 2225 print chr$(159);left$(st$,40);chr$(5)
 2226 return
@@ -653,14 +702,16 @@
 2453 if en<>0 then close 4:close 15:rc=0:li$="0":return
 2454 input#4,rc
 2455 input#4,li$
-2456 close 4:close 15
-2457 return
+2456 if not(st and 64) then input#4,dc
+2457 close 4:close 15
+2458 return
 2460 open 15,8,15,"s0:hamlog.idx":close 15
 2461 open 4,8,4,"hamlog.idx,s,w"
 2462 print#4,rc
 2463 print#4,li$
-2464 close 4
-2465 return
+2464 print#4,dc
+2465 close 4
+2466 return
 2480 pq=0
 2481 open 15,8,15
 2482 open 4,8,4,"hamlog.que,s,r"

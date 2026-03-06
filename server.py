@@ -415,8 +415,14 @@ class ClientHandler:
 
             filtered = filtered[:20]
             await self.send(f"!SPOTS,{len(filtered)}")
-            for line in filtered:
+            for idx, line in enumerate(filtered):
                 await self.send(line)
+                try:
+                    ack = await asyncio.wait_for(self.readline(), timeout=30.0)
+                    log.debug("SPOT ACK: %r", ack)
+                except asyncio.TimeoutError:
+                    log.warning("Timeout waiting for spot ACK after %d", idx + 1)
+                    break
             await self.send("!END")
 
         except Exception as e:

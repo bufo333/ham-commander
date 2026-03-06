@@ -2,6 +2,8 @@
 
 A Commodore 64 ham radio logging application with local disk storage and optional online features via an RS232 modem connection.
 
+![Splash Screen](pictures/splash-screen.png)
+
 ```
 ┌──────────────────────┐     RS232      ┌───────────────┐     TCP      ┌──────────┐
 │  Commodore 64        │◄──(1200 baud)──│  PTY Bridge   │◄────────────►│  Server  │
@@ -19,10 +21,59 @@ A Commodore 64 ham radio logging application with local disk storage and optiona
 
 - **Local logging** — Log QSOs directly on the C64 with full REL file storage on 1541 (D64) or 1581/SD2IEC (D81) drives
 - **QRZ callsign lookups** — Look up name, location, and grid square via RS232 modem
-- **POTA spots** — View Parks on the Air activations with band/mode filtering
+- **POTA spots** — View Parks on the Air activations with band/mode filtering; select a spot and log it directly as a new QSO
+- **Log search** — Search your logbook by callsign prefix (press "s" on the log screen)
 - **QRZ sync** — Incremental sync of your QRZ logbook to the C64
 - **Reverse-chronological log** — Newest QSOs shown first, with paged browsing
 - **Multi-disk support** — Import tool automatically splits large logs across multiple disk images
+
+## Screenshots
+
+### Startup & Configuration
+
+On first launch, the setup wizard walks you through station configuration. On subsequent launches, the startup screen shows your station info and record count, and prompts for the current UTC date/time.
+
+![Startup Screen](pictures/startup-config.png)
+
+### QSO Log Browser
+
+The log browser (F3) shows your QSOs in reverse chronological order (newest first). Use cursor keys to scroll, +/- to page, Enter to view details, and "s" to search by callsign.
+
+![Log Browser](pictures/log-multiple-qsos.png)
+
+### QSO Detail View
+
+Press Enter on any QSO to see the full detail including frequency, grid square, name, country, and sync status. From here you can delete the QSO with "d".
+
+![QSO Detail](pictures/qso-detail.png)
+
+### Going Online
+
+Press F7 to connect to the server via RS232 modem. The C64 dials the configured server address and establishes a connection.
+
+![Going Online](pictures/going-online.png)
+
+### Online Log View
+
+When connected, the status bar shows "ONLINE" and you can sync with QRZ, look up callsigns, and fetch POTA spots.
+
+![Online Log](pictures/log-online.png)
+
+### QRZ Sync
+
+Press F6 to sync your logbook with QRZ. Any pending local QSOs are uploaded first, then new QSOs from QRZ are downloaded with a per-record ACK handshake to prevent buffer overruns.
+
+![Sync Complete](pictures/sync-complete.png)
+
+### POTA Spots
+
+Press F1 when online to fetch live Parks on the Air spots. Use F2 to filter by band and/or mode. Select any spot and press Enter to log it directly as a new QSO — the callsign, frequency, mode, and band are pre-filled from the spot data.
+
+![Spot Filter](pictures/spot-filter.png)
+
+![Loading Spots](pictures/spots-loading.png)
+
+![POTA Spots](pictures/pota-spots.png)
 
 ## Prerequisites
 
@@ -182,6 +233,7 @@ The server listens on port 6400 by default and provides:
 | Key | Function |
 |-----|----------|
 | F1 | POTA Spots (with band/mode filter when online) |
+| F2 | Filter spots by band/mode (from spot screen) |
 | F3 | Log Browser (newest first) |
 | F4 | Configuration Editor |
 | F5 | New QSO Entry |
@@ -191,9 +243,15 @@ The server listens on port 6400 by default and provides:
 ### Log Browser
 
 - **Cursor Up/Down** — Move selection
+- **+/-** — Page forward/backward
 - **Enter** — View QSO detail
+- **S** — Search by callsign
 - **D** — Delete QSO (from detail view)
 - Records are displayed newest-first
+
+### POTA Spots to QSO
+
+When viewing POTA spots (F1), press **Enter** on any spot to start a new QSO entry with the activator's callsign, frequency, mode, and band pre-filled. Just confirm the date/time, RST, and save.
 
 ### Screen Layout
 
