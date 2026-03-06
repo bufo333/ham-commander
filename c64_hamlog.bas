@@ -51,7 +51,9 @@
 124 if k$=chr$(139) and ol=1 then goto 1750
 126 if k$=chr$(138) then gosub 2600:goto 102
 128 if k$="d" and sc=3 then gosub 843:goto 102
-129 goto 102
+130 if k$="+" and sc=0 then gosub 575:goto 102
+131 if k$="-" and sc=0 then gosub 577:goto 102
+132 goto 102
 150 if sc=0 then gosub 561:return
 151 if sc=1 then gosub 260:return
 152 return
@@ -176,7 +178,7 @@
 553 print
 555 next i
 556 print chr$(154);h$;chr$(5)
-557 print chr$(155);" pg ";lp+1;" enter=detail ";chr$(17);chr$(145);"=scroll";chr$(5)
+557 print chr$(155);" pg ";lp+1;" enter=dtl +/-=page ";chr$(17);chr$(145);"=scroll";chr$(5)
 558 gosub 2260
 559 return
 561 pg=lp*19:pc=19:if pg+pc>rc then pc=rc-pg
@@ -187,6 +189,10 @@
 571 if sl>0 then os=sl:sl=sl-1:gosub 600:return
 573 if lp>0 then lp=lp-1:gosub 1900:sl=18:gosub 540
 574 return
+575 if (lp+1)*19<rc then lp=lp+1:gosub 1900:sl=0:gosub 540
+576 return
+577 if lp>0 then lp=lp-1:gosub 1900:sl=0:gosub 540
+578 return
 580 if rc=0 then return
 581 rn=rc-lp*19-sl
 582 if rn<1 then return
