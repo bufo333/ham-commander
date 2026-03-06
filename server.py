@@ -246,10 +246,11 @@ def load_local_adif():
 # ── CSV Helpers ────────────────────────────────────────────────
 
 def sanitize_csv(value):
-    """Remove commas, control chars, and non-ASCII from a value for CSV safety."""
+    """Remove commas, control chars, and non-ASCII from a value for CSV safety.
+    Uppercases everything — lowercase ASCII displays as graphics chars in PETSCII."""
     s = str(value) if value else ""
     s = s.replace(",", ";").replace("\r", "").replace("\n", " ").strip()
-    return s.encode("ascii", errors="ignore").decode("ascii")
+    return s.encode("ascii", errors="ignore").decode("ascii").upper()
 
 
 # ── Client Session Handler (Command/Response Protocol) ────────
@@ -503,13 +504,18 @@ class ClientHandler:
                 await self.send("!END")
                 return
 
-            await self._send_log_records(records)
+            await self._send_log_records(records, paced=True)
 
         except Exception as e:
             await self.send(f"!ERR,{sanitize_csv(str(e))}")
 
-    async def _send_log_records(self, records):
-        """Format and send log records as CSV."""
+    async def _send_log_records(self, records, paced=False):
+        """Format and send log records as CSV.
+
+        If paced=True, wait for a 'K' ACK from the client after each record
+        to avoid overflowing the C64's 256-byte RS232 receive buffer during
+        slow disk writes.
+        """
         await self.send(f"!LOG,{len(records)}")
 
         for idx, rec in enumerate(records):
@@ -533,6 +539,14 @@ class ClientHandler:
                 f"{logid},{call},{band},{mode},{freq},{date},{time},"
                 f"{rsts},{rstr},{grid},{name},{country},{comment}"
             )
+
+            if paced:
+                try:
+                    ack = await asyncio.wait_for(self.readline(), timeout=30.0)
+                    log.debug("ACK: %r", ack)
+                except asyncio.TimeoutError:
+                    log.warning("Timeout waiting for ACK after record %d", idx + 1)
+                    break
 
         await self.send("!END")
 
@@ -631,7 +645,7 @@ class ClientHandler:
                 if logid_num > last_num:
                     new_records.append(rec)
 
-            await self._send_log_records(new_records)
+            await self._send_log_records(new_records, paced=True)
 
         except Exception as e:
             await self.send(f"!ERR,{sanitize_csv(str(e))}")

@@ -35,7 +35,7 @@
 67 print
 68 print " press any key..."
 69 get w$:if w$="" then 69
-72 sc=0:gosub 500
+72 lp=0:sc=0:gosub 500
 102 get k$:if k$="" then 102
 104 if k$=chr$(133) and ol=1 then sc=1:gosub 1300:goto 102
 105 if k$=chr$(133) and ol=0 then sc=1:gosub 200:goto 102
@@ -188,8 +188,8 @@
 573 if lp>0 then lp=lp-1:gosub 1900:sl=18:gosub 540
 574 return
 580 if rc=0 then return
-581 di=lp*19+sl
-582 if di>=rc then return
+581 rn=rc-lp*19-sl
+582 if rn<1 then return
 583 sc=3:gosub 800
 584 return
 590 d$=left$(xd$(i+1),8)
@@ -198,7 +198,7 @@
 594 cl$=left$(xc$(i+1)+"         ",9)
 595 bx$=left$(xb$(i+1),3)
 596 md$=left$(mid$(xb$(i+1),6,3)+"   ",3)
-598 ln$=mid$(d$,5,2)+"/"+mid$(d$,7,2)+" "+t$+" "+cl$+bx$+" "+md$
+598 ln$=mid$(d$,5,2)+"/"+mid$(d$,7,2)+"/"+mid$(d$,3,2)+" "+t$+" "+cl$+bx$+" "+md$
 599 return
 600 i=os:gosub 590:poke 214,os+1:print
 604 print left$(ln$+"                                        ",39);
@@ -207,10 +207,10 @@
 607 return
 800 gosub 2200
 803 print "  loading detail..."
-805 rn=lp*19+sl+1
+805 rn=rc-lp*19-sl
 806 open 15,8,15
 807 open 3,8,3,da$
-808 lo=rn and 255:hi=int(rn/256)+1
+808 lo=rn and 255:hi=int(rn/256)
 809 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 810 input#3,a$:print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85)
 811 input#3,b$:if len(b$)<83 then b$=left$(s9$,83-len(b$))+b$
@@ -247,10 +247,10 @@
 847 print "  y=delete  n=cancel"
 848 get w$:if w$="" then 848
 849 if w$<>"y" then sc=3:gosub 800:return
-851 di=lp*19+sl:rn=di+1:gosub 890:return
+851 rn=rc-lp*19-sl:gosub 890:return
 890 open 15,8,15
 891 open 3,8,3,da$
-892 lo=rn and 255:hi=int(rn/256)+1
+892 lo=rn and 255:hi=int(rn/256)
 893 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 894 input#3,a$:print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85)
 895 input#3,b$:if len(b$)<83 then b$=left$(s9$,83-len(b$))+b$
@@ -335,7 +335,7 @@
 1115 w$=w$+left$(cy$+"             ",13)
 1117 open 15,8,15
 1118 open 3,8,3,da$
-1120 lo=rc and 255:hi=int(rc/256)+1
+1120 lo=rc and 255:hi=int(rc/256)
 1121 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 1122 print#3,left$(w$,83):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85):print#3,mid$(w$,84)
 1124 input#15,en,em$,et$,es$:close 3:close 15
@@ -345,7 +345,7 @@
 1131 s$=s$+left$(nd$+"        ",8)+left$(nt$+"    ",4)+left$(rs$+"   ",3)+left$(rr$+"   ",3)+"n  "
 1132 open 15,8,15
 1133 open 3,8,3,su$
-1134 lo=rc and 255:hi=int(rc/256)+1
+1134 lo=rc and 255:hi=int(rc/256)
 1135 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 1136 print#3,s$
 1137 close 3:close 15
@@ -363,7 +363,7 @@
 1180 lg$=mid$(rl$,9)
 1183 open 15,8,15
 1184 open 3,8,3,da$
-1185 lo=rc and 255:hi=int(rc/256)+1
+1185 lo=rc and 255:hi=int(rc/256)
 1186 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 1187 input#3,a$:print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85)
 1188 input#3,b$:if len(b$)<83 then b$=left$(s9$,83-len(b$))+b$
@@ -462,7 +462,7 @@
 1519 print
 1521 cm$="hello":gosub 2000
 1522 gosub 2010
-1523 print " resp: ";left$(rl$,30)
+1523 goto 1524
 1524 if left$(rl$,3)<>"!ok" then print " connection failed":goto 1540
 1526 gosub 240
 1529 ut$=p4$:uh$=p5$
@@ -501,7 +501,7 @@
 1590 lg$=mid$(rl$,9)
 1591 open 15,8,15
 1592 open 3,8,3,da$
-1593 lo=rn and 255:hi=int(rn/256)+1
+1593 lo=rn and 255:hi=int(rn/256)
 1594 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 1595 input#3,a$:print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85)
 1596 input#3,b$:if len(b$)<83 then b$=left$(s9$,83-len(b$))+b$
@@ -532,7 +532,7 @@
 1753 print "  syncing logbook..."
 1754 print chr$(154);h$;chr$(5)
 1756 if pq>0 then gosub 1550
-1758 cm$="fetch":gosub 2000
+1758 cm$="sync,"+li$:gosub 2000
 1759 gosub 2010
 1760 if left$(rl$,4)<>"!log" then print " sync failed: ";rl$:goto 1795
 1761 sn=val(mid$(rl$,6))
@@ -552,17 +552,17 @@
 1779 w$=w$+left$("599   ",3)
 1780 w$=w$+left$(mc$+"            ",12)
 1781 w$=w$+left$(p1$+"            ",12)
-1782 w$=w$+"s"
+1782 w$=w$+"s":li$=p1$
 1783 w$=w$+left$("                                        ",40)
 1784 w$=w$+left$("      ",6)
 1785 w$=w$+left$("                              ",30)
 1786 w$=w$+left$("             ",13)
-1787 lo=rc and 255:hi=int(rc/256)+1
+1787 lo=rc and 255:hi=int(rc/256)
 1788 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 1789 print#3,left$(w$,83):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85):print#3,mid$(w$,84)
 1790 s$=left$(p2$+"          ",10)+left$(p3$+"    ",4)+left$(p4$+"    ",4)+left$(p6$+"        ",8)+left$(p7$+"    ",4)+"599599s  "
 1791 print#15,"p"+chr$(5)+chr$(lo)+chr$(hi)+chr$(1):print#5,s$
-1792 if sa/10=int(sa/10) then print " stored ";sa;" of ";sn
+1792 print#2,"k"+chr$(13);:if sa/10=int(sa/10) then print " stored ";sa;" of ";sn
 1793 next si:close 3:close 5:close 15
 1794 gosub 2010
 1795 gosub 2460
@@ -579,8 +579,8 @@
 1907 pc=19:if ps+pc>rc then pc=rc-ps
 1908 if pc<1 then close 3:close 15:return
 1909 for i=1 to pc
-1910 rn=ps+i
-1911 lo=rn and 255:hi=int(rn/256)+1
+1910 rn=rc-ps-i+1
+1911 lo=rn and 255:hi=int(rn/256)
 1912 print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1)
 1913 input#3,w$
 1915 xc$(i)=left$(w$,10)

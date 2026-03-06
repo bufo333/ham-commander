@@ -439,8 +439,14 @@ def write_rel_file(img, filename, records_data, record_size, dir_index):
             # Next side sector link
             if ss_idx < len(ss_ts) - 1:
                 sec[0x00], sec[0x01] = ss_ts[ss_idx + 1]
-            # Side sector block number
-            sec[0x02] = global_ss_num
+            else:
+                # Last side sector: byte 0 = 0, byte 1 = offset of last valid
+                # data pointer byte (0x10 + num_entries*2 - 1)
+                chunk = group_data[ss_idx * 120:(ss_idx + 1) * 120]
+                sec[0x00] = 0x00
+                sec[0x01] = 0x10 + len(chunk) * 2 - 1
+            # Side sector block number (within group, 0-5)
+            sec[0x02] = ss_idx
             sec[0x03] = record_size
             # Side sector group table ($04-$0F)
             for i in range(min(6, len(ss_ts))):
@@ -457,8 +463,10 @@ def write_rel_file(img, filename, records_data, record_size, dir_index):
     # ── Write super side sector ──────────────────────────────
     sss_t, sss_s = img.alloc()
     sec = bytearray(256)
-    sec[0x00] = groups[0][0][0][0]  # group 0 first SS track
-    sec[0x01] = groups[0][0][0][1]  # group 0 first SS sector
+    # Bytes 0-1: chain link to first side sector (1581 ROM follows this)
+    first_ss_t, first_ss_s = groups[0][0][0]
+    sec[0x00] = first_ss_t
+    sec[0x01] = first_ss_s
     sec[0x02] = 0xFE               # super side sector marker
     for i, (ss_ts, _) in enumerate(groups):
         if i < 126:
@@ -533,14 +541,21 @@ def main():
     else:
         print(f"  warning: {args.prg} not found, skipping PRG")
 
+    # ── Pre-allocate REL files with growth room ─────────────
+    MAX_RECORDS = 3500
+    PAD_RECORDS = max(0, MAX_RECORDS - import_count)
+    for _ in range(PAD_RECORDS):
+        packed_sum.append(b'\x00' * SUMMARY_SIZE)
+        packed_full.append(b'\x00' * RECORD_SIZE)
+
     # ── Write REL (HAMLOG.SUM) — summary for fast log screen ─
-    print(f"  writing {import_count} summaries to HAMLOG.SUM...")
+    print(f"  writing {import_count} summaries to HAMLOG.SUM (+ {PAD_RECORDS} padding)...")
     sum_sectors = write_rel_file(img, "HAMLOG.SUM", packed_sum, SUMMARY_SIZE, dir_idx)
     dir_idx += 1
     print(f"    {sum_sectors} sectors used")
 
     # ── Write REL (HAMLOG.DAT) — full detail records ────────
-    print(f"  writing {import_count} records to HAMLOG.DAT...")
+    print(f"  writing {import_count} records to HAMLOG.DAT (+ {PAD_RECORDS} padding)...")
     rel_sectors = write_rel_file(img, "HAMLOG.DAT", packed_full, RECORD_SIZE, dir_idx)
     dir_idx += 1
     print(f"    {rel_sectors} sectors used")
