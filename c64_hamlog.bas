@@ -37,9 +37,10 @@
 69 get w$:if w$="" then 69
 72 lp=0:sc=0:gosub 500
 102 get k$:if k$="" then 102
-104 if k$=chr$(133) and ol=1 then sc=1:gosub 1300:goto 102
-105 if k$=chr$(133) and ol=0 then sc=1:gosub 200:goto 102
-106 if k$=chr$(134) then sc=0:lp=0:gosub 500:goto 102
+104 if k$=chr$(133) and sp>0 then sc=1:sl=0:gosub 300:goto 102
+105 if k$=chr$(133) and ol=1 then sc=1:gosub 1300:goto 102
+106 if k$=chr$(133) and ol=0 then sc=1:gosub 200:goto 102
+107 if k$=chr$(134) then sc=0:lp=0:gosub 500:goto 102
 108 if k$=chr$(135) then sc=2:gosub 1000:goto 102
 110 if k$=chr$(136) and ol=0 then goto 1500
 111 if k$=chr$(136) and ol=1 then goto 1700
@@ -54,7 +55,8 @@
 129 if k$="s" and sc=0 and rc>0 then gosub 700:goto 102
 130 if k$="+" and sc=0 then gosub 575:goto 102
 131 if k$="-" and sc=0 then gosub 577:goto 102
-132 goto 102
+132 if k$="r" and sc=1 and ol=1 then gosub 200:goto 102
+134 goto 102
 150 if sc=0 then gosub 561:return
 151 if sc=1 then gosub 260:return
 152 if sc=4 then gosub 760:return
@@ -115,10 +117,14 @@
 256 p6$=p6$+c$:goto 249
 257 p7$=p7$+c$:goto 249
 260 mx=fi-1:if mx<0 then mx=0
-261 if sl<mx then sl=sl+1:gosub 300
-262 return
-270 if sl>0 then sl=sl-1:gosub 300
-271 return
+261 if sl>=mx then return
+262 os=sl:sl=sl+1
+263 if sl-tp>=19 then tp=tp+1:gosub 300:return
+264 gosub 297:return
+270 if sl<1 then return
+271 os=sl:sl=sl-1
+272 if sl<tp then tp=tp-1:gosub 300:return
+273 gosub 297:return
 280 if fi=0 then return
 281 ix=fx(sl+1)
 283 nc$=ca$(ix):nf$=fq$(ix):nm$=mo$(ix)
@@ -131,6 +137,11 @@
 292 fi=fi+1:fx(fi)=i
 293 next i
 294 return
+295 ix=fx(i+1):ln$=left$(ca$(ix)+"          ",10)+left$(fq$(ix)+"       ",7)+" "+left$(mo$(ix)+"    ",4)+" "+left$(rf$(ix)+"          ",10)
+296 return
+297 i=os:gosub 295:poke 214,(os-tp)+2:print
+298 print left$(ln$+"                                        ",39);
+299 i=sl:gosub 295:poke 214,(sl-tp)+2:print:print chr$(158);chr$(18);left$(ln$+"                                        ",39);chr$(146);chr$(5);:return
 300 gosub 2200
 302 st$=""
 303 if ol=1 then st$="online"
@@ -156,7 +167,7 @@
 327 print
 330 next i
 332 print chr$(154);h$;chr$(5)
-333 print chr$(155);" enter=log  f2=filter  ";chr$(17);chr$(145);"=scroll";chr$(5)
+333 print chr$(155);" ent=log f2=filt r=rfsh ";chr$(17);chr$(145);"=scrl";chr$(5)
 334 gosub 2260
 335 return
 500 gosub 2200
@@ -321,9 +332,12 @@
 1000 gosub 2200
 1003 print "  new qso entry"
 1004 print chr$(154);h$;chr$(5)
-1007 if nc$="" then print:input "  callsign: ";nc$
-1008 if nc$<>"" then print "  callsign: ";nc$
-1009 if nc$="" then sc=0:gosub 500:return
+1006 if nc$<>"" then print "  callsign: ";nc$:print "  del=cancel":goto 1010
+1007 print:input "  callsign: ";nc$
+1008 if nc$="" then sc=0:gosub 500:return
+1009 goto 1012
+1010 get w$:if w$="" then 1010
+1011 if w$=chr$(20) then nc$="":nf$="":nm$="":nb$="":sc=1:sl=0:gosub 300:return
 1012 lk$="":lg$="":ln$="":ly$=""
 1013 if ol=1 then gosub 1200
 1015 if nb$="" then input "      band: ";nb$
