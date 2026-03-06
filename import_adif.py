@@ -12,7 +12,7 @@ For large logs (>3500 on D81, >700 on D64), automatically splits across
 multiple disk images: hamlog-01.d81, hamlog-02.d81, etc.
 
 Usage:
-  python3 import_adif.py                              # default: kg4olw.adi -> hamlog.d81
+  python3 import_adif.py --adif mylog.adi              # import ADIF into D81
   python3 import_adif.py --adif mylog.adi             # custom ADIF file
   python3 import_adif.py --format d64                 # create D64 instead
   python3 import_adif.py --skip-last 0                # import all records
@@ -32,7 +32,7 @@ from diskimage import (
 
 def main():
     parser = argparse.ArgumentParser(description="Import ADIF into disk image(s)")
-    parser.add_argument("--adif", default="kg4olw.adi", help="ADIF file to import")
+    parser.add_argument("--adif", required=True, help="ADIF file to import")
     parser.add_argument("--format", choices=["d81", "d64"], default="d81",
                         help="Disk format (default: d81)")
     parser.add_argument("--prg", default="c64_hamlog.prg", help="PRG file to put on disk")
@@ -40,8 +40,8 @@ def main():
     parser.add_argument("--output", default="hamlog", help="Output base name (without extension)")
     parser.add_argument("--skip-last", type=int, default=50,
                         help="Skip last N records (for sync testing)")
-    parser.add_argument("--callsign", default="KG4OLW", help="Station callsign")
-    parser.add_argument("--name", default="John Burns", help="Operator name")
+    parser.add_argument("--callsign", default="N0CALL", help="Station callsign")
+    parser.add_argument("--name", default="", help="Operator name")
     parser.add_argument("--grid", default="EL95tn", help="Grid square")
     parser.add_argument("--server", default="127.0.0.1", help="Server IP")
     parser.add_argument("--port", default="6400", help="Server port")

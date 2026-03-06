@@ -31,7 +31,7 @@ QRZ_USER = os.getenv("QRZ_USERNAME", "")
 QRZ_PASS = os.getenv("QRZ_PASSWORD", "")
 QRZ_API_KEY = os.getenv("QRZ_API_KEY", "")
 MY_CALL = os.getenv("MY_CALLSIGN", "N0CALL")
-ADIF_FILE = os.getenv("ADIF_FILE", "kg4olw.adi")
+ADIF_FILE = os.getenv("ADIF_FILE", "logbook.adi")
 
 # ── Constants ──────────────────────────────────────────────────
 CRLF = "\r\n"
