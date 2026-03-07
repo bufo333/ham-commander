@@ -6,8 +6,10 @@ Usage:
   python3 create_disk.py --format d64          # D64 with PRG + empty REL files
   python3 create_disk.py --prg-only            # Just build the PRG file, no disk
   python3 create_disk.py --output mylog.d81    # Custom output filename
+  python3 create_disk.py --count 5             # Create 5 sequential disks for SD2IEC
 
 The PRG is built automatically from c64_hamlog.bas using bas_lower.py + petcat.
+Output defaults to hamlog-NN.d81 (numbered for SD2IEC compatibility).
 """
 
 import argparse
@@ -41,7 +43,9 @@ def main():
     parser.add_argument("--server", default="127.0.0.1", help="Server IP")
     parser.add_argument("--port", default="6400", help="Server port")
     parser.add_argument("--baud", default="1200", help="Baud rate")
-    parser.add_argument("--disk-number", type=int, default=1, help="Disk sequence number")
+    parser.add_argument("--disk-number", type=int, default=1, help="Starting disk sequence number")
+    parser.add_argument("--count", type=int, default=1,
+                        help="Number of sequential disks to create (for SD2IEC)")
     args = parser.parse_args()
 
     # ── Build PRG ─────────────────────────────────────────────
@@ -53,17 +57,9 @@ def main():
         print("Done! PRG file created.")
         return
 
-    # ── Create disk image ─────────────────────────────────────
+    # ── Create disk image(s) ─────────────────────────────────
     fmt = args.format
-    output = args.output or f"hamlog.{fmt}"
     max_rec = args.max_records or MAX_RECORDS[fmt]
-
-    print(f"Creating {fmt.upper()} disk image...")
-    print(f"  pre-allocating {max_rec} empty records")
-
-    # Empty records
-    packed_sum = [b'\x00' * SUMMARY_SIZE for _ in range(max_rec)]
-    packed_full = [b'\x00' * RECORD_SIZE for _ in range(max_rec)]
 
     # Config
     cfg_content = (
@@ -71,16 +67,30 @@ def main():
         f"{args.baud}\r{args.name.upper()}\r{args.grid.upper()}\r"
     ).encode("ascii")
 
-    free, sum_sec, dat_sec = build_disk(
-        fmt, prg_bytes, packed_sum, packed_full,
-        import_count=0, max_records=max_rec,
-        last_logid="0", cfg_content=cfg_content,
-        output_path=output, disk_number=args.disk_number,
-    )
+    # Empty records (shared across all disks)
+    packed_sum = [b'\x00' * SUMMARY_SIZE for _ in range(max_rec)]
+    packed_full = [b'\x00' * RECORD_SIZE for _ in range(max_rec)]
 
-    print(f"\nDone! {output} created.")
-    print(f"  {max_rec} empty record slots pre-allocated")
-    print(f"  {free} sectors free ({free * 254 // 1024}KB)")
+    for i in range(args.count):
+        disk_num = args.disk_number + i
+        if args.output:
+            output = args.output if args.count == 1 else f"{args.output}-{disk_num:02d}.{fmt}"
+        else:
+            output = f"hamlog-{disk_num:02d}.{fmt}"
+
+        print(f"Creating {output} (disk #{disk_num})...")
+        print(f"  pre-allocating {max_rec} empty records")
+
+        free, sum_sec, dat_sec = build_disk(
+            fmt, prg_bytes, packed_sum, packed_full,
+            import_count=0, max_records=max_rec,
+            last_logid="0", cfg_content=cfg_content,
+            output_path=output, disk_number=disk_num,
+        )
+
+        print(f"  {free} sectors free ({free * 254 // 1024}KB)")
+
+    print(f"\nDone! {args.count} disk(s) created.")
 
 
 if __name__ == "__main__":

@@ -651,20 +651,26 @@
 1800 print:print " press any key..."
 1801 get w$:if w$="" then 1801
 1802 sc=0:gosub 500:goto 102
-1850 gosub 2200:print " insert disk #";dn-1
-1851 print:print " swap disk image, then"
-1852 print " press any key..."
-1853 print:print " del=cancel"
-1854 get w$:if w$="" then 1854
-1855 if w$=chr$(20) then gosub 500:return
-1856 dn=dn-1:goto 1870
-1860 gosub 2200:print " insert disk #";dn+1
-1861 print:print " swap disk image, then"
-1862 print " press any key..."
-1863 print:print " del=cancel"
-1864 get w$:if w$="" then 1864
-1865 if w$=chr$(20) then gosub 500:return
-1866 dn=dn+1
+1830 ef=0:td$=right$(str$(td+100),2):df$="hamlog-"+td$+".d81"
+1831 open 15,8,15,"cd:"+chr$(95):input#15,en,em$,et$,es$:close 15
+1832 if en>0 then 1840
+1833 open 15,8,15,"cd:"+df$:input#15,en,em$,et$,es$:close 15
+1834 if en=0 then print " mounted ";df$:return
+1835 print " ";df$;" not found!"
+1836 od$=right$(str$(dn+100),2):of$="hamlog-"+od$+".d81"
+1837 open 15,8,15,"cd:"+of$:close 15
+1838 ef=1:for w=1 to 1000:next w:return
+1840 gosub 2200:print " insert disk #";td
+1841 print:print " swap disk, then"
+1842 print " press any key..."
+1843 print:print " del=cancel"
+1844 get w$:if w$="" then 1844
+1845 if w$=chr$(20) then ef=1
+1846 return
+1850 td=dn-1:gosub 1830:if ef then gosub 500:return
+1851 dn=td:goto 1870
+1860 td=dn+1:gosub 1830:if ef then gosub 500:return
+1861 dn=td
 1870 gosub 2400:gosub 2450:gosub 2480
 1871 lp=0:sl=0:gosub 500
 1872 return
@@ -880,16 +886,16 @@
 2681 print "  - keep your config"
 2682 print "  - increment disk #"
 2683 print
-2684 print " insert blank disk or"
-2685 print " new d81 image, then"
-2686 print " press y to continue."
-2687 print
-2688 print " y=archive  n=cancel"
-2689 get w$:if w$="" then 2689
-2690 if w$<>"y" then return
+2684 print " next disk: hamlog-"
+2685 print right$(str$(dn+101),2);".d81"
+2686 print
+2687 print " y=archive  n=cancel"
+2688 get w$:if w$="" then 2688
+2689 if w$<>"y" then return
+2690 td=dn+1:gosub 1830:if ef then return
 2691 print:print " formatting..."
 2692 open 15,8,15,"n:hamlog,hl":close 15
-2693 dn=dn+1:rc=0:dc=0:li$="0":pq=0
+2693 dn=td:rc=0:dc=0:li$="0":pq=0
 2694 gosub 2430
 2695 gosub 2462
 2696 print " creating log files..."
