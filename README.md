@@ -276,6 +276,17 @@ Each disk image is self-contained — program, data, config, and index are all i
 
 The status bar shows capacity percentage when a disk is more than 80% full. When a disk reaches capacity, new QSOs are blocked and you're directed to archive. Press F4 and select option 7 to format a new disk — this resets the log, keeps your station config, and increments the disk number. Use `<` and `>` on the log screen to navigate between archive disks.
 
+### SD2IEC Setup
+
+For SD2IEC users, pre-create sequential blank disk images and copy them to your SD card:
+
+```bash
+# Create 5 blank disks: hamlog-01.d81 through hamlog-05.d81
+python3 create_disk.py --callsign YOURCALL --name "Your Name" --grid AB12cd --count 5
+```
+
+The C64 automatically switches between disk images using SD2IEC `CD:` commands. On real 1581 drives, it falls back to a manual "insert disk" prompt.
+
 ## File Reference
 
 | File | Description |
