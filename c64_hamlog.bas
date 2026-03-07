@@ -627,7 +627,7 @@
 1753 print "  syncing logbook..."
 1754 print chr$(154);h$;chr$(5)
 1756 if pq>0 then gosub 1550
-1758 cm$="sync,"+li$:gosub 2000
+1758 cm$="sync,"+li$+","+str$(mx-rc):gosub 2000
 1759 gosub 2010
 1760 if left$(rl$,4)<>"!log" then print " sync failed: ";rl$:goto 1795
 1761 sn=val(mid$(rl$,6))
@@ -636,8 +636,8 @@
 1765 open 15,8,15:open 3,8,3,da$:open 5,8,5,su$
 1766 sa=0:for si=1 to sn
 1767 gosub 2010:gosub 240
-1771 rc=rc+1:sa=sa+1
-1772 w$=left$(p2$+"            ",12)
+1771 if rc>=mx then print " disk full!":goto 1794
+1772 rc=rc+1:sa=sa+1:w$=left$(p2$+"            ",12)
 1773 w$=w$+left$(p3$+"      ",6)
 1774 w$=w$+left$(p4$+"      ",6)
 1775 w$=w$+left$(p6$+"        ",8)

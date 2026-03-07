@@ -656,10 +656,14 @@ class ClientHandler:
     async def cmd_sync(self, args):
         """Incremental sync — return QSOs added since last known LogID.
 
-        SYNC,lastlogid  — returns all QSOs with LogID > lastlogid
+        SYNC,lastlogid[,max]  — returns QSOs with LogID > lastlogid
+        Optional max limits how many records to return (disk capacity).
         Response: same as FETCH (!LOG,count + CSV + !END)
         """
         last_id = args[0] if args else "0"
+        max_count = int(args[1]) if len(args) > 1 and args[1].strip().lstrip('-').isdigit() else None
+        if max_count is not None and max_count < 1:
+            max_count = 0
 
         try:
             if self.qrz_log:
@@ -685,6 +689,8 @@ class ClientHandler:
                     if logid_num > last_num:
                         new_records.append(rec)
                 log.info("SYNC: %d records after logid %s", len(new_records), last_id)
+                if max_count is not None:
+                    new_records = new_records[:max_count]
             else:
                 # Fall back to local ADIF file
                 records = load_local_adif()
@@ -701,6 +707,8 @@ class ClientHandler:
                         logid_num = idx + 1
                     if logid_num > last_num:
                         new_records.append(rec)
+                if max_count is not None:
+                    new_records = new_records[:max_count]
 
             await self._send_log_records(new_records, paced=True)
 
