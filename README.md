@@ -28,6 +28,7 @@ A Commodore 64 ham radio logging application with local disk storage and optiona
 - **QRZ sync** — Incremental sync of your QRZ logbook to the C64
 - **Reverse-chronological log** — Newest QSOs shown first, with paged browsing
 - **Archive & multi-disk** — Capacity tracking with warnings, archive to new disk from the config menu, and navigate between disks with `<` / `>` on the log screen
+- **Splash screen with CW** — "HAM" in Morse code at 20 WPM on the SID chip with color-cycling title bar
 
 ## Screenshots
 
@@ -317,9 +318,12 @@ The C64 automatically switches between disk images using SD2IEC `CD:` commands. 
 | `import_adif.py` | Imports ADIF logs into disk images (multi-disk capable) |
 | `server.py` | Asyncio TCP server (QRZ lookups, POTA spots, sync) |
 | `pty_bridge.py` | Bridges VICE RS232 PTY to TCP server |
-| `acia_driver.asm` | Documented 6502 assembly source for SwiftLink ACIA driver + ML readline |
+| `acia_driver.asm` | 6502 assembly source for SwiftLink ACIA driver + ML readline (documentation only) |
+| `morse_player.asm` | 6502 assembly source for splash screen Morse code player (documentation only) |
 | `DISK_FORMAT.md` | Deep-dive technical reference for D81/D64/REL file formats |
 | `CLAUDE.md` | Developer reference (line ranges, variables, record formats) |
+
+**Note:** The `.asm` files are included in the repository for documentation purposes — they are the human-readable source for the machine language routines stored as BASIC `DATA` statements in `c64_hamlog.bas`. They are not assembled as part of the build process.
 
 ## Troubleshooting
 
