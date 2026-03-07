@@ -25,7 +25,7 @@ A Commodore 64 ham radio logging application with local disk storage and optiona
 - **Log search** — Search your logbook by callsign prefix (press "s" on the log screen)
 - **QRZ sync** — Incremental sync of your QRZ logbook to the C64
 - **Reverse-chronological log** — Newest QSOs shown first, with paged browsing
-- **Multi-disk support** — Import tool automatically splits large logs across multiple disk images
+- **Archive & multi-disk** — Capacity tracking with warnings, archive to new disk from the config menu, and navigate between disks with `<` / `>` on the log screen
 
 ## Screenshots
 
@@ -235,7 +235,7 @@ The server listens on port 6400 by default and provides:
 | F1 | POTA Spots (with band/mode filter when online) |
 | F2 | Filter spots by band/mode (from spot screen) |
 | F3 | Log Browser (newest first) |
-| F4 | Configuration Editor |
+| F4 | Configuration Editor + Archive Disk |
 | F5 | New QSO Entry |
 | F6 | Sync with QRZ (when online) |
 | F7 | Go Online / Offline |
@@ -247,6 +247,7 @@ The server listens on port 6400 by default and provides:
 - **Enter** — View QSO detail
 - **S** — Search by callsign
 - **D** — Delete QSO (from detail view)
+- **< / >** — Navigate to previous/next archive disk
 - Records are displayed newest-first
 
 ### POTA Spots to QSO
@@ -264,7 +265,7 @@ Row 22: Help text
 Row 24: F-key bar
 ```
 
-## Disk Capacity
+## Disk Capacity & Archiving
 
 | Format | Drive | Max QSOs | Disk Images for 10K QSOs |
 |--------|-------|----------|--------------------------|
@@ -272,6 +273,8 @@ Row 24: F-key bar
 | D64 | 1541 | 700 | 15 disks |
 
 Each disk image is self-contained — program, data, config, and index are all included. Multi-disk import numbers them sequentially (`hamlog-01.d81`, `hamlog-02.d81`, etc.).
+
+The status bar shows capacity percentage when a disk is more than 80% full. When a disk reaches capacity, new QSOs are blocked and you're directed to archive. Press F4 and select option 7 to format a new disk — this resets the log, keeps your station config, and increments the disk number. Use `<` and `>` on the log screen to navigate between archive disks.
 
 ## File Reference
 
