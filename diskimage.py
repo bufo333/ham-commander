@@ -18,7 +18,8 @@ RECORD_SIZE = 168              # full detail record
 SUMMARY_SIZE = 40              # quick summary record for log screen
 
 # Max records per disk format (conservative, accounts for PRG + overhead)
-MAX_RECORDS = {"d81": 3500, "d64": 700}
+MAX_RECORDS = {"d81": 3500, "d64": 600}
+MAX_RECORDS_ARCHIVE = {"d81": 3600, "d64": 700}
 
 # ── Band edges (shared with server.py) ───────────────────────
 BAND_EDGES = [
@@ -667,7 +668,8 @@ def build_disk(fmt, prg_bytes, packed_sum, packed_full, import_count,
     dir_idx += 1
 
     # HAMLOG.IDX
-    idx_content = f"{import_count}\r{last_logid}\r0\r{max_records}\r{disk_number}\r".encode("ascii")
+    dk = 64 if fmt == "d64" else 81
+    idx_content = f"{import_count}\r{last_logid}\r0\r{max_records}\r{disk_number}\r{dk}\r".encode("ascii")
     write_seq_file(img, "HAMLOG.IDX", idx_content, dir_idx)
     dir_idx += 1
 

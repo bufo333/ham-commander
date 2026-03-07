@@ -6,7 +6,7 @@
 15 sv$="127.0.0.1":pt$="6400"
 16 mc$="n0call":bd$="1200"
 17 mn$="":mg$=""
-18 ol=0:sc=0:rc=0:li$="0":pq=0:sp=0:lp=0:sl=0:fi=0:sf=0:sr=0:dc=0:mx=3500:dn=1
+18 ol=0:sc=0:rc=0:li$="0":pq=0:sp=0:lp=0:sl=0:fi=0:sf=0:sr=0:dc=0:mx=3500:dn=1:dk=81
 19 fb$="":fm$=""
 28 ut$="00000000":uh$="0000"
 29 s9$="                                                                                   "
@@ -29,7 +29,7 @@
 59 print " records: ";rc-dc;" / ";mx
 60 if dn>1 then print "    disk: #";dn
 61 if pq>0 then print " pending: ";pq
-62 print
+62 print:if dn>1 then gosub 80
 63 print " utc date yyyymmdd (enter=skip):"
 64 input " ";td$
 65 if td$<>"" then ut$=td$
@@ -38,7 +38,16 @@
 68 print
 69 print " press any key..."
 70 get w$:if w$="" then 70
-72 lp=0:sc=0:gosub 500
+72 lp=0:sc=0:gosub 500:goto 102
+80 print " load archive disk? (y/n)"
+81 get w$:if w$="" then 81
+82 if w$<>"y" then return
+83 print:input " disk # ";td
+84 if td<1 or td=dn then print " cancelled.":return
+85 gosub 1830:if ef then return
+86 dn=td:gosub 2400:gosub 2450:gosub 2480
+87 print " loaded disk #";dn;" (";rc-dc;"/";mx;")"
+88 return
 102 get k$:if k$="" then 102
 104 if k$=chr$(133) and sp>0 then sc=1:sl=0:gosub 300:goto 102
 105 if k$=chr$(133) and ol=1 then sc=1:gosub 1300:goto 102
@@ -659,13 +668,13 @@
 1800 print:print " press any key..."
 1801 get w$:if w$="" then 1801
 1802 sc=0:gosub 500:goto 102
-1830 ef=0:td$=right$(str$(td+100),2):df$="hamlog-"+td$+".d81"
+1830 ef=0:td$=right$(str$(td+100),2):df$="hamlog-"+td$+".d"+right$(str$(dk),2)
 1831 open 15,8,15,"cd:"+chr$(95):input#15,en,em$,et$,es$:close 15
 1832 if en>0 then 1840
 1833 open 15,8,15,"cd:"+df$:input#15,en,em$,et$,es$:close 15
 1834 if en=0 then print " mounted ";df$:return
 1835 print " ";df$;" not found!"
-1836 od$=right$(str$(dn+100),2):of$="hamlog-"+od$+".d81"
+1836 od$=right$(str$(dn+100),2):of$="hamlog-"+od$+".d"+right$(str$(dk),2)
 1837 open 15,8,15,"cd:"+of$:close 15
 1838 ef=1:for w=1 to 1000:next w:return
 1840 gosub 2200:print " insert disk #";td
@@ -765,7 +774,9 @@
 2456 if not(st and 64) then input#4,dc
 2457 if not(st and 64) then input#4,mx
 2458 if not(st and 64) then input#4,dn
-2459 close 4:close 15:return
+2459 if not(st and 64) then input#4,dk
+2460 if dk<>64 then dk=81
+2461 close 4:close 15:return
 2462 open 15,8,15,"s0:hamlog.idx":close 15
 2463 open 4,8,4,"hamlog.idx,s,w"
 2464 print#4,rc
@@ -773,8 +784,9 @@
 2466 print#4,dc
 2467 print#4,mx
 2468 print#4,dn
-2469 close 4
-2470 return
+2469 print#4,dk
+2470 close 4
+2471 return
 2480 pq=0
 2481 open 15,8,15
 2482 open 4,8,4,"hamlog.que,s,r"
@@ -837,19 +849,25 @@
 2557 input " ";ts$:if ts$<>"" then sv$=ts$
 2558 print " port [";pt$;"]:"
 2559 input " ";ts$:if ts$<>"" then pt$=ts$
-2570 print
-2571 print " saving configuration..."
-2572 gosub 2430
-2573 print " creating logbook..."
-2575 rc=0:li$="0"
-2576 gosub 2462
-2577 print
-2578 print " setup complete!"
-2579 print " station: ";mc$
-2580 if mn$<>"" then print " name:    ";mn$
-2581 if mg$<>"" then print " grid:    ";mg$
+2570 print " disk type:"
+2571 print "  1. d81 (3500 records)"
+2572 print "  2. d64 (600 records)"
+2573 get w$:if w$="" then 2573
+2574 if w$="2" then dk=64:mx=600
+2575 print " using d";dk;" (";mx;" max)"
+2576 print
+2577 print " saving configuration..."
+2578 gosub 2430
+2579 print " creating logbook..."
+2580 rc=0:li$="0"
+2581 gosub 2462
 2582 print
-2583 return
+2583 print " setup complete!"
+2584 print " station: ";mc$
+2585 if mn$<>"" then print " name:    ";mn$
+2586 if mg$<>"" then print " grid:    ";mg$
+2587 print
+2588 return
 2600 print chr$(147);chr$(5);
 2603 print chr$(154);e$;chr$(5)
 2604 print "       edit configuration"
@@ -863,8 +881,8 @@
 2612 print "  5. port:     ";pt$
 2613 print "  6. baud:     ";bd$
 2614 print "  7. archive disk"
-2615 print:print "  disk #";dn;" | ";rc;"/";mx;" (";int(rc/mx*100);"%)"
-2616 print
+2615 print "  8. disk type: d";dk
+2616 print:print "  disk #";dn;" | ";rc;"/";mx;" (";int(rc/mx*100);"%)"
 2617 print " enter number to edit (0=done):"
 2618 get w$:if w$="" then 2618
 2619 if w$="0" then 2650
@@ -875,7 +893,10 @@
 2624 if w$="5" then input " port: ";pt$:goto 2600
 2625 if w$="6" then input " baud: ";bd$:goto 2600
 2626 if w$="7" then gosub 2670:goto 2600
-2627 goto 2618
+2627 if w$="8" then dk=145-dk:if dk=81 then mx=3500:goto 2600
+2628 if w$="8" and rc>600 then dk=81:mx=3500:print " too many records for d64!":for w=1 to 1000:next w:goto 2600
+2629 if w$="8" then mx=600:goto 2600
+2630 goto 2618
 2650 print:print " saving..."
 2651 gosub 2430
 2652 print " configuration saved."
@@ -897,7 +918,7 @@
 2682 print "  - increment disk #"
 2683 print
 2684 print " next disk: hamlog-"
-2685 print right$(str$(dn+101),2);".d81"
+2685 print right$(str$(dn+101),2);".d";dk
 2686 print
 2687 print " y=archive  n=cancel"
 2688 get w$:if w$="" then 2688
@@ -905,7 +926,7 @@
 2690 td=dn+1:gosub 1830:if ef then return
 2691 print:print " formatting..."
 2692 open 15,8,15,"n:hamlog,hl":close 15
-2693 dn=td:rc=0:dc=0:li$="0":pq=0
+2693 dn=td:rc=0:dc=0:li$="0":pq=0:mx=3600:if dk=64 then mx=700
 2694 gosub 2430
 2695 gosub 2462
 2696 print " creating log files..."
