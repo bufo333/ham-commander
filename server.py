@@ -12,6 +12,7 @@ Protocol:
 """
 
 import asyncio
+import html
 import logging
 import os
 import re
@@ -92,6 +93,7 @@ def adif_record(**fields):
 
 def parse_adif(text):
     """Parse ADIF text into a list of record dicts."""
+    text = html.unescape(text)
     records = []
     current = {}
     i = 0
@@ -167,7 +169,8 @@ class QRZXmlApi:
             "agent": USER_AGENT,
         }
         async with http.get(QRZ_XML_URL, params=params) as resp:
-            text = await resp.text()
+            raw = await resp.read()
+            text = raw.decode("latin-1")
         root = ET.fromstring(text)
         key = root.find(".//q:Key", QRZ_NS)
         if key is not None:
@@ -182,7 +185,8 @@ class QRZXmlApi:
             await self.login(http)
         params = {"s": self.session_key, "callsign": callsign}
         async with http.get(QRZ_XML_URL, params=params) as resp:
-            text = await resp.text()
+            raw = await resp.read()
+            text = raw.decode("latin-1")
         root = ET.fromstring(text)
         err = root.find(".//q:Error", QRZ_NS)
         if err is not None:
@@ -213,7 +217,8 @@ class QRZLogbookApi:
         params["KEY"] = self.api_key
         headers = {"User-Agent": USER_AGENT}
         async with http.post(QRZ_LOG_URL, data=params, headers=headers) as resp:
-            text = await resp.text()
+            raw = await resp.read()
+            text = raw.decode("latin-1")
         return parse_qrz_logbook_response(text)
 
     async def status(self, http):
@@ -658,31 +663,44 @@ class ClientHandler:
 
         try:
             if self.qrz_log:
-                resp = await self.qrz_log.fetch(self.http, "ALL,MAX:200")
+                resp = await self.qrz_log.fetch(self.http, "ALL,MAX:5000")
                 if resp.get("RESULT") != "OK":
                     reason = resp.get("REASON", "UNKNOWN")
                     await self.send(f"!ERR,{sanitize_csv(reason)}")
                     return
                 records = parse_adif(resp.get("ADIF", ""))
+                log.info("SYNC: fetched %d total records from QRZ", len(records))
+
+                try:
+                    last_num = int(last_id)
+                except ValueError:
+                    last_num = 0
+                new_records = []
+                for idx, rec in enumerate(records):
+                    logid_str = rec.get("app_qrzlog_logid", str(idx + 1))
+                    try:
+                        logid_num = int(logid_str)
+                    except ValueError:
+                        logid_num = idx + 1
+                    if logid_num > last_num:
+                        new_records.append(rec)
+                log.info("SYNC: %d records after logid %s", len(new_records), last_id)
             else:
                 # Fall back to local ADIF file
                 records = load_local_adif()
-
-            # Filter to records with LogID > last_id
-            try:
-                last_num = int(last_id)
-            except ValueError:
-                last_num = 0
-
-            new_records = []
-            for idx, rec in enumerate(records):
-                logid_str = rec.get("app_qrzlog_logid", str(idx + 1))
                 try:
-                    logid_num = int(logid_str)
+                    last_num = int(last_id)
                 except ValueError:
-                    logid_num = idx + 1
-                if logid_num > last_num:
-                    new_records.append(rec)
+                    last_num = 0
+                new_records = []
+                for idx, rec in enumerate(records):
+                    logid_str = rec.get("app_qrzlog_logid", str(idx + 1))
+                    try:
+                        logid_num = int(logid_str)
+                    except ValueError:
+                        logid_num = idx + 1
+                    if logid_num > last_num:
+                        new_records.append(rec)
 
             await self._send_log_records(new_records, paced=True)
 
