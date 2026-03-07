@@ -103,9 +103,12 @@
 226 s$="k"+chr$(13):gosub 2880
 227 next i
 228 gosub 2010
-229 gosub 290
-231 sl=0:gosub 300
-232 return
+229 gosub 290:sl=0:tp=0
+230 st$="online":if fb$<>"" or fm$<>"" then st$=st$+" | "+fb$+" "+fm$
+231 st$=st$+" | "+str$(fi)+" spots":poke 214,0:print:print chr$(159);left$(st$+"                                        ",39);chr$(5)
+232 poke 214,fi+2:print:print chr$(154);h$;chr$(5):print chr$(155);" ent=log f2=filt r=rfsh ";chr$(17);chr$(145);"=scrl";chr$(5)
+233 gosub 2260:i=0:gosub 295:poke 214,2:print:print chr$(158);chr$(18);left$(ln$+"                                        ",39);chr$(146);chr$(5);
+234 return
 240 p1$="":p2$="":p3$="":p4$="":p5$="":p6$="":p7$=""
 241 tl$=rl$:pn=1
 242 for j=1 to len(tl$)
@@ -183,13 +186,14 @@
 507 st$=st$+" | "+str$(rc-dc)+" qsos"
 508 if pq>0 then st$=st$+" | pend:"+str$(pq)
 509 if rc>mx*0.8 then st$=st$+" "+str$(int(rc/mx*100))+"%"
-510 print left$(st$,40)
-511 print chr$(154);h$;chr$(5)
+510 print chr$(159);left$(st$+"                                        ",39);chr$(5)
 512 if rc=0 then print:print "  no qsos yet. press f5 to add.":gosub 2260:sl=0:return
 513 gosub 1900
 515 sl=0:vw=19
-516 gosub 540
-517 return
+516 poke 214,pc+1:print:print chr$(154);h$;chr$(5)
+517 print chr$(155);" pg ";lp+1;" s=srch ent=dtl +/- <> ";chr$(17);chr$(145);"=scrl";chr$(5):gosub 2260
+518 i=0:gosub 590:poke 214,1:print:print chr$(158);chr$(18);left$(ln$+"                                        ",39);chr$(146);chr$(5);
+519 return
 540 gosub 2200:gosub 2220
 546 for i=0 to vw-1
 547 if i>=pc then print:goto 555
@@ -708,7 +712,7 @@
 2016 if len(rl$)<250 then rl$=rl$+a$
 2018 goto 2011
 2020 sys 49920:ln=peek(49392):if ln=0 then rt=rt+1:if rt<20 then 2020
-2021 for i=0toln-1:rl$=rl$+chr$(peek(49664+i)):next:return
+2021 for qi=0toln-1:rl$=rl$+chr$(peek(49664+qi)):next:return
 2200 print chr$(147);chr$(5);
 2203 print chr$(154);chr$(18);"                                       ";chr$(146)
 2205 print chr$(19);
