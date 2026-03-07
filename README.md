@@ -1,4 +1,4 @@
-# Ham Commander v2.1
+# Ham Commander v2.2
 
 A Commodore 64 ham radio logging application with local disk storage and optional online features via an RS232 modem connection.
 
@@ -25,10 +25,19 @@ A Commodore 64 ham radio logging application with local disk storage and optiona
 - **QRZ callsign lookups** — Look up name, location, and grid square via RS232 modem
 - **POTA spots** — View Parks on the Air activations with band/mode filtering; select a spot and log it directly as a new QSO
 - **Log search** — Search your logbook by callsign prefix (press "s" on the log screen)
-- **QRZ sync** — Incremental sync of your QRZ logbook to the C64
+- **QRZ sync** — Incremental sync of your QRZ logbook to the C64, capacity-aware (only fetches what fits on disk)
 - **Reverse-chronological log** — Newest QSOs shown first, with paged browsing
-- **Archive & multi-disk** — Capacity tracking with warnings, archive to new disk from the config menu, and navigate between disks with `<` / `>` on the log screen
+- **Archive & multi-disk** — Capacity tracking with warnings, archive to new disk from the config menu, and navigate between disks with `<` / `>` on the log screen. Archive disks get higher capacity (no PRG overhead). Load previous archive disks at startup.
 - **Splash screen with CW** — "HAM" in Morse code at 20 WPM on the SID chip with color-cycling title bar
+
+## What's New in v2.2
+
+- **Startup archive disk loading** — When booting from disk #2+, prompts to load a different archive disk before entering the main screen
+- **Higher archive disk capacity** — Archive disks (created via F4 → option 7) have no PRG, so they get more record space: 3,600 on D81 (was 3,500), 700 on D64 (was 600)
+- **Capacity-aware sync** — QRZ sync now sends remaining disk space to the server, which limits results to fit. Safety check on the C64 side stops writing if the disk fills during sync
+- **Morse code splash screen** — SID-generated CW plays "HAM" at 20 WPM with color-cycling title art on startup
+- **QRZ sync fixes** — Handle HTML-encoded ADIF responses and UTF-8 decode errors from the QRZ API
+- **Progressive display fix** — Variable collision and row alignment issues resolved in spot/log loading
 
 ## Screenshots
 
@@ -243,7 +252,7 @@ The server listens on port 6400 by default and provides:
 - `HELLO` — Connection handshake
 - `LOOKUP,callsign` — QRZ callsign lookup
 - `SPOTS[,band][,mode]` — POTA spot feed (filtered, max 20)
-- `SYNC,last_logid` — Incremental logbook sync from QRZ
+- `SYNC,last_logid[,max]` — Incremental logbook sync from QRZ (max limits records to disk capacity)
 - `ADD,call,band,mode,...` — Upload QSO to QRZ logbook
 
 ## C64 Usage
@@ -287,10 +296,10 @@ Row 24: F-key bar
 
 ## Disk Capacity & Archiving
 
-| Format | Drive | Max QSOs | Disk Images for 10K QSOs |
-|--------|-------|----------|--------------------------|
-| D81 | 1581 / SD2IEC | 3,500 | 3 disks |
-| D64 | 1541 | 700 | 15 disks |
+| Format | Drive | Max QSOs (boot) | Max QSOs (archive) | Disk Images for 10K QSOs |
+|--------|-------|-----------------|---------------------|--------------------------|
+| D81 | 1581 / SD2IEC | 3,500 | 3,600 | 3 disks |
+| D64 | 1541 | 600 | 700 | 15 disks |
 
 Each disk image is self-contained — program, data, config, and index are all included. Multi-disk import numbers them sequentially (`hamlog-01.d81`, `hamlog-02.d81`, etc.).
 

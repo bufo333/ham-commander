@@ -1,7 +1,7 @@
 1 poke 56835,42:hw=-(peek(56835)=42):poke 56835,0:if hw=0 then open 2,2,0,chr$(8)+chr$(0)
 9 poke 53280,0:poke 53281,0:print chr$(147);:gosub 2710
 10 print chr$(147);chr$(5);
-11 print "  ham commander v2.1"
+11 print "  ham commander v2.2"
 12 print chr$(159);"  loading..."
 15 sv$="127.0.0.1":pt$="6400"
 16 mc$="n0call":bd$="1200"
@@ -940,7 +940,7 @@
 2712 print a$;"                                       ";b$
 2713 print a$;" ";b$;"                                     ";a$;" ";b$
 2714 print a$;" ";b$;chr$(158);"            ham commander            ";a$;" ";b$
-2715 print a$;" ";b$;chr$(155);"                v2.1                 ";a$;" ";b$
+2715 print a$;" ";b$;chr$(155);"                v2.2                 ";a$;" ";b$
 2716 print a$;" ";b$;"                                     ";a$;" ";b$
 2717 print a$;"                                       ";b$
 2718 print
