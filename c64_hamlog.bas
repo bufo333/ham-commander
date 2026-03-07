@@ -57,7 +57,9 @@
 130 if k$="+" and sc=0 then gosub 575:goto 102
 131 if k$="-" and sc=0 then gosub 577:goto 102
 132 if k$="r" and sc=1 and ol=1 then gosub 200:goto 102
-134 goto 102
+133 if k$="<" and sc=0 and dn>1 then gosub 1850:goto 102
+135 if k$=">" and sc=0 then gosub 1860:goto 102
+136 goto 102
 150 if sc=0 then gosub 561:return
 151 if sc=1 then gosub 260:return
 152 if sc=4 then gosub 760:return
@@ -195,7 +197,7 @@
 553 print
 555 next i
 556 print chr$(154);h$;chr$(5)
-557 print chr$(155);" pg ";lp+1;" s=find ent=dtl +/-pg ";chr$(17);chr$(145);"=scrl";chr$(5)
+557 print chr$(155);" pg ";lp+1;" s=srch ent=dtl +/- <> ";chr$(17);chr$(145);"=scrl";chr$(5)
 558 gosub 2260
 559 return
 561 if pc<1 then return
@@ -649,6 +651,23 @@
 1800 print:print " press any key..."
 1801 get w$:if w$="" then 1801
 1802 sc=0:gosub 500:goto 102
+1850 gosub 2200:print " insert disk #";dn-1
+1851 print:print " swap disk image, then"
+1852 print " press any key..."
+1853 print:print " del=cancel"
+1854 get w$:if w$="" then 1854
+1855 if w$=chr$(20) then gosub 500:return
+1856 dn=dn-1:goto 1870
+1860 gosub 2200:print " insert disk #";dn+1
+1861 print:print " swap disk image, then"
+1862 print " press any key..."
+1863 print:print " del=cancel"
+1864 get w$:if w$="" then 1864
+1865 if w$=chr$(20) then gosub 500:return
+1866 dn=dn+1
+1870 gosub 2400:gosub 2450:gosub 2480
+1871 lp=0:sl=0:gosub 500
+1872 return
 1900 if rc=0 then return
 1904 open 15,8,15
 1905 open 3,8,3,su$
