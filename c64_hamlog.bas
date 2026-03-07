@@ -1,12 +1,12 @@
 1 open 2,2,0,chr$(8)+chr$(0)
-9 poke 53280,0:poke 53281,0:print chr$(147);:gosub 2700
+9 poke 53280,0:poke 53281,0:print chr$(147);:gosub 2710
 10 print chr$(147);chr$(5);
 11 print "  ham commander v2.0"
 12 print chr$(159);"  loading..."
 15 sv$="127.0.0.1":pt$="6400"
 16 mc$="n0call":bd$="1200"
 17 mn$="":mg$=""
-18 ol=0:sc=0:rc=0:li$="0":pq=0:sp=0:lp=0:sl=0:fi=0:sf=0:sr=0:dc=0
+18 ol=0:sc=0:rc=0:li$="0":pq=0:sp=0:lp=0:sl=0:fi=0:sf=0:sr=0:dc=0:mx=3500:dn=1
 19 fb$="":fm$=""
 28 ut$="00000000":uh$="0000"
 29 s9$="                                                                                   "
@@ -24,17 +24,18 @@
 56 if mn$<>"" then print " op name: ";mn$
 57 if mg$<>"" then print "    grid: ";mg$
 58 print "  server: ";sv$;":";pt$
-59 print " records: ";rc-dc
-60 if pq>0 then print " pending: ";pq
-61 print
-62 print " utc date yyyymmdd (enter=skip):"
-63 input " ";td$
-64 if td$<>"" then ut$=td$
-65 if td$<>"" then print " enter utc time (hhmm):"
-66 if td$<>"" then input " ";th$:uh$=th$
-67 print
-68 print " press any key..."
-69 get w$:if w$="" then 69
+59 print " records: ";rc-dc;" / ";mx
+60 if dn>1 then print "    disk: #";dn
+61 if pq>0 then print " pending: ";pq
+62 print
+63 print " utc date yyyymmdd (enter=skip):"
+64 input " ";td$
+65 if td$<>"" then ut$=td$
+66 if td$<>"" then print " enter utc time (hhmm):"
+67 if td$<>"" then input " ";th$:uh$=th$
+68 print
+69 print " press any key..."
+70 get w$:if w$="" then 70
 72 lp=0:sc=0:gosub 500
 102 get k$:if k$="" then 102
 104 if k$=chr$(133) and sp>0 then sc=1:sl=0:gosub 300:goto 102
@@ -176,8 +177,9 @@
 506 if ol=0 then st$="offline"
 507 st$=st$+" | "+str$(rc-dc)+" qsos"
 508 if pq>0 then st$=st$+" | pend:"+str$(pq)
-509 print left$(st$,40)
-510 print chr$(154);h$;chr$(5)
+509 if rc>mx*0.8 then st$=st$+" "+str$(int(rc/mx*100))+"%"
+510 print left$(st$,40)
+511 print chr$(154);h$;chr$(5)
 512 if rc=0 then print:print "  no qsos yet. press f5 to add.":gosub 2260:sl=0:return
 513 gosub 1900
 515 sl=0:vw=19
@@ -325,13 +327,14 @@
 901 input#3,w$:w$=left$(w$,36)+"d"+mid$(w$,38):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(1):print#3,w$
 902 close 3:close 15
 903 dc=dc+1:if of$="n" or of$="p" then pq=pq-1:if pq<0 then pq=0
-904 gosub 2460
+904 gosub 2462
 905 print "  qso deleted."
 906 for w=1 to 500:next w
 907 sc=0:gosub 500:return
 1000 gosub 2200
 1003 print "  new qso entry"
 1004 print chr$(154);h$;chr$(5)
+1005 if rc>=mx then print:print "  disk full! (";rc;"/";mx;")":print "  archive via f4 config menu.":gosub 2260:return
 1006 if nc$<>"" then print "  callsign: ";nc$:print "  del=cancel":goto 1010
 1007 print:input "  callsign: ";nc$
 1008 if nc$="" then sc=0:gosub 500:return
@@ -378,11 +381,13 @@
 1057 gosub 1130
 1058 gosub 1150
 1059 pq=pq+1
-1061 gosub 2460
+1061 gosub 2462
 1063 print:print "  qso saved! #";rc
 1064 if pq>0 and ol=0 then print "  pending sync: ";pq
-1066 if ol=1 then gosub 1170
-1067 for w=1 to 1000:next w
+1065 if rc>=mx then print chr$(18);"  disk full!";chr$(146);" archive via f4"
+1066 if rc>=mx*0.9 and rc<mx then print "  disk ";int(rc/mx*100);"% full"
+1067 if ol=1 then gosub 1170
+1068 for w=1 to 1000:next w
 1069 nc$="":nf$="":nm$="":nb$=""
 1070 sc=0:gosub 500
 1071 return
@@ -567,7 +572,7 @@
 1581 pq=pq-uq:if pq<0 then pq=0
 1582 print " uploaded: ";uq;" qsos"
 1584 if pq=0 then open 15,8,15,"s0:hamlog.que":close 15
-1585 gosub 2460
+1585 gosub 2462
 1586 return
 1590 lg$=mid$(rl$,9):li$=lg$
 1591 open 15,8,15
@@ -637,7 +642,7 @@
 1793 if sa/10=int(sa/10) then print " stored ";sa;" of ";sn
 1794 next si:close 3:close 5:close 15
 1795 print#2,"k"+chr$(13);:gosub 2010
-1796 gosub 2460
+1796 gosub 2462
 1797 print
 1798 print " sync complete: ";sa;" qsos added"
 1799 print " total records: ";rc
@@ -688,8 +693,9 @@
 2222 if ol=0 then st$="offline"
 2223 st$=st$+" | "+str$(rc-dc)+" qsos"
 2224 if pq>0 then st$=st$+" | pend:"+str$(pq)
-2225 print chr$(159);left$(st$,40);chr$(5)
-2226 return
+2225 if rc>mx*0.8 then st$=st$+" "+str$(int(rc/mx*100))+"%"
+2226 print chr$(159);left$(st$,40);chr$(5)
+2227 return
 2260 poke 214,23:print
 2262 print chr$(154);chr$(18);"f1=spt f3=log f4=cfg f5=nw f6=syn f7=on";chr$(146);chr$(5);
 2263 return
@@ -722,15 +728,18 @@
 2454 input#4,rc
 2455 input#4,li$
 2456 if not(st and 64) then input#4,dc
-2457 close 4:close 15
-2458 return
-2460 open 15,8,15,"s0:hamlog.idx":close 15
-2461 open 4,8,4,"hamlog.idx,s,w"
-2462 print#4,rc
-2463 print#4,li$
-2464 print#4,dc
-2465 close 4
-2466 return
+2457 if not(st and 64) then input#4,mx
+2458 if not(st and 64) then input#4,dn
+2459 close 4:close 15:return
+2462 open 15,8,15,"s0:hamlog.idx":close 15
+2463 open 4,8,4,"hamlog.idx,s,w"
+2464 print#4,rc
+2465 print#4,li$
+2466 print#4,dc
+2467 print#4,mx
+2468 print#4,dn
+2469 close 4
+2470 return
 2480 pq=0
 2481 open 15,8,15
 2482 open 4,8,4,"hamlog.que,s,r"
@@ -798,7 +807,7 @@
 2572 gosub 2430
 2573 print " creating logbook..."
 2575 rc=0:li$="0"
-2576 gosub 2460
+2576 gosub 2462
 2577 print
 2578 print " setup complete!"
 2579 print " station: ";mc$
@@ -818,51 +827,86 @@
 2611 print "  4. server:   ";sv$
 2612 print "  5. port:     ";pt$
 2613 print "  6. baud:     ";bd$
-2614 print
-2615 print " enter number to edit (0=done):"
-2616 get w$:if w$="" then 2616
-2617 if w$="0" then 2650
-2618 if w$="1" then input " callsign: ";mc$:goto 2600
-2619 if w$="2" then input " name: ";mn$:goto 2600
-2620 if w$="3" then input " grid: ";mg$:goto 2600
-2621 if w$="4" then input " server ip: ";sv$:goto 2600
-2622 if w$="5" then input " port: ";pt$:goto 2600
-2623 if w$="6" then input " baud: ";bd$:goto 2600
-2624 goto 2616
+2614 print "  7. archive disk"
+2615 print:print "  disk #";dn;" | ";rc;"/";mx;" (";int(rc/mx*100);"%)"
+2616 print
+2617 print " enter number to edit (0=done):"
+2618 get w$:if w$="" then 2618
+2619 if w$="0" then 2650
+2620 if w$="1" then input " callsign: ";mc$:goto 2600
+2621 if w$="2" then input " name: ";mn$:goto 2600
+2622 if w$="3" then input " grid: ";mg$:goto 2600
+2623 if w$="4" then input " server ip: ";sv$:goto 2600
+2624 if w$="5" then input " port: ";pt$:goto 2600
+2625 if w$="6" then input " baud: ";bd$:goto 2600
+2626 if w$="7" then gosub 2670:goto 2600
+2627 goto 2618
 2650 print:print " saving..."
 2651 gosub 2430
 2652 print " configuration saved."
 2653 for w=1 to 500:next w
 2654 sc=0:gosub 500
 2655 return
-2700 poke 53280,6:poke 53281,0
-2703 a$=chr$(154)+chr$(18):b$=chr$(146)
-2704 print a$;"                                       ";b$
-2705 print a$;" ";b$;"                                     ";a$;" ";b$
-2706 print a$;" ";b$;chr$(158);"            ham commander            ";a$;" ";b$
-2707 print a$;" ";b$;chr$(155);"                v2.0                 ";a$;" ";b$
-2708 print a$;" ";b$;"                                     ";a$;" ";b$
-2709 print a$;"                                       ";b$
-2710 print
-2711 print chr$(30);"                  |"
-2712 print "                  |"
-2713 print "       ))  (      |      )  (("
-2714 print "      )))  (      |      )  ((("
-2715 print "       ))  (      |      )  (("
-2716 print "                  |"
-2717 print "                  |"
-2718 print chr$(154);chr$(18);"           [===========]           ";chr$(146)
-2719 print chr$(154);chr$(18);"           [===========]           ";chr$(146)
-2720 print
-2721 print chr$(5);"   a commodore 64 ham radio logger"
-2722 print chr$(159);"      qrz + pota integration"
-2723 print
-2724 print chr$(151);"            by john burns"
-2725 print:print
-2726 print chr$(155);"       press any key to start"
-2728 fc$=chr$(7)+chr$(1)+chr$(13)+chr$(3)+chr$(14)+chr$(15)
-2729 for cc=1 to 6:cl=asc(mid$(fc$,cc,1))
-2730 for cx=55377 to 55413:poke cx,cl:next cx
-2731 for dw=0 to 100:next dw:get w$:if w$<>"" then 2740
-2732 next cc:goto 2729
-2740 return
+2670 print chr$(147);chr$(5);
+2671 print chr$(154);e$;chr$(5)
+2672 print "       archive disk"
+2673 print chr$(154);e$;chr$(5)
+2674 print
+2675 print " current disk #";dn
+2676 print " records: ";rc;" / ";mx
+2677 print
+2678 print " this will:"
+2679 print "  - format a new disk"
+2680 print "  - reset log to empty"
+2681 print "  - keep your config"
+2682 print "  - increment disk #"
+2683 print
+2684 print " insert blank disk or"
+2685 print " new d81 image, then"
+2686 print " press y to continue."
+2687 print
+2688 print " y=archive  n=cancel"
+2689 get w$:if w$="" then 2689
+2690 if w$<>"y" then return
+2691 print:print " formatting..."
+2692 open 15,8,15,"n:hamlog,hl":close 15
+2693 dn=dn+1:rc=0:dc=0:li$="0":pq=0
+2694 gosub 2430
+2695 gosub 2462
+2696 print " creating log files..."
+2697 open 3,8,3,da$:close 3
+2698 open 3,8,3,su$:close 3
+2699 print:print " disk #";dn;" ready!":print " press any key..."
+2700 get w$:if w$="" then 2700
+2701 sc=0:gosub 500:return
+2710 poke 53280,6:poke 53281,0
+2711 a$=chr$(154)+chr$(18):b$=chr$(146)
+2712 print a$;"                                       ";b$
+2713 print a$;" ";b$;"                                     ";a$;" ";b$
+2714 print a$;" ";b$;chr$(158);"            ham commander            ";a$;" ";b$
+2715 print a$;" ";b$;chr$(155);"                v2.0                 ";a$;" ";b$
+2716 print a$;" ";b$;"                                     ";a$;" ";b$
+2717 print a$;"                                       ";b$
+2718 print
+2719 print chr$(30);"                  |"
+2720 print "                  |"
+2721 print "       ))  (      |      )  (("
+2722 print "      )))  (      |      )  ((("
+2723 print "       ))  (      |      )  (("
+2724 print "                  |"
+2725 print "                  |"
+2726 print chr$(154);chr$(18);"           [===========]           ";chr$(146)
+2727 print chr$(154);chr$(18);"           [===========]           ";chr$(146)
+2728 print
+2729 print chr$(5);"   a commodore 64 ham radio logger"
+2730 print chr$(159);"      qrz + pota integration"
+2731 print
+2732 print chr$(151);"            by john burns"
+2733 print:print
+2734 print chr$(155);"       press any key to start"
+2736 fc$=chr$(7)+chr$(1)+chr$(13)+chr$(3)+chr$(14)+chr$(15)
+2737 for cc=1 to 6:cl=asc(mid$(fc$,cc,1))
+2738 for cx=55377 to 55413:poke cx,cl:next cx
+2739 for dw=0 to 100:next dw:get w$:if w$<>"" then 2750
+2740 next cc:goto 2737
+2750 return

@@ -41,6 +41,7 @@ def main():
     parser.add_argument("--server", default="127.0.0.1", help="Server IP")
     parser.add_argument("--port", default="6400", help="Server port")
     parser.add_argument("--baud", default="1200", help="Baud rate")
+    parser.add_argument("--disk-number", type=int, default=1, help="Disk sequence number")
     args = parser.parse_args()
 
     # ── Build PRG ─────────────────────────────────────────────
@@ -74,7 +75,7 @@ def main():
         fmt, prg_bytes, packed_sum, packed_full,
         import_count=0, max_records=max_rec,
         last_logid="0", cfg_content=cfg_content,
-        output_path=output,
+        output_path=output, disk_number=args.disk_number,
     )
 
     print(f"\nDone! {output} created.")

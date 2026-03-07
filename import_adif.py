@@ -128,7 +128,7 @@ def main():
             fmt, prg_bytes, disk_sum, disk_full,
             import_count=disk_count, max_records=max_rec,
             last_logid=last_logid, cfg_content=cfg_content,
-            output_path=output_path,
+            output_path=output_path, disk_number=disk_num + 1,
         )
 
         print(f"  SUM: {sum_sec} sectors, DAT: {dat_sec} sectors")

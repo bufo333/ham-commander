@@ -641,7 +641,8 @@ def build_prg(bas_path="c64_hamlog.bas", prg_path="c64_hamlog.prg"):
 # ── Disk building helper ─────────────────────────────────────
 
 def build_disk(fmt, prg_bytes, packed_sum, packed_full, import_count,
-               max_records, last_logid, cfg_content, output_path):
+               max_records, last_logid, cfg_content, output_path,
+               disk_number=1):
     """Build a single disk image with the given records.
 
     packed_sum/packed_full: lists of packed record bytes (already padded to max_records).
@@ -666,7 +667,7 @@ def build_disk(fmt, prg_bytes, packed_sum, packed_full, import_count,
     dir_idx += 1
 
     # HAMLOG.IDX
-    idx_content = f"{import_count}\r{last_logid}\r".encode("ascii")
+    idx_content = f"{import_count}\r{last_logid}\r0\r{max_records}\r{disk_number}\r".encode("ascii")
     write_seq_file(img, "HAMLOG.IDX", idx_content, dir_idx)
     dir_idx += 1
 
