@@ -290,6 +290,11 @@ class ClientHandler:
     def __init__(self, reader, writer):
         self.reader = reader
         self.writer = writer
+        # Disable Nagle — send each byte immediately for polling-based clients
+        sock = writer.get_extra_info("socket")
+        if sock:
+            import socket
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.qrz_xml = QRZXmlApi(QRZ_USER, QRZ_PASS) if QRZ_USER else None
         self.qrz_log = QRZLogbookApi(QRZ_API_KEY) if QRZ_API_KEY else None
         self.http = None
@@ -305,7 +310,7 @@ class ClientHandler:
         for byte in data:
             self.writer.write(bytes([byte]))
             await self.writer.drain()
-            await asyncio.sleep(0.009)  # ~1ms/char at 1200 baud (10 bits/char)
+            await asyncio.sleep(0.010)  # pacing for polling (no receive buffer)
 
     async def readline(self):
         """Read one line from client, stripping CR/LF and IP232/telnet escapes."""
@@ -349,7 +354,7 @@ class ClientHandler:
 
         if cmd.startswith("ATDT") or cmd.startswith("AT"):
             # Hayes modem command — respond like a modem for IP232 compatibility
-            await self.send("CONNECT 1200")
+            await self.send("CONNECT")
         elif cmd == "HELLO":
             await self.cmd_hello()
         elif cmd == "SPOTS":

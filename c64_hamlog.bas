@@ -1,4 +1,4 @@
-1 open 2,2,0,chr$(8)+chr$(0)
+1 poke 56835,42:hw=-(peek(56835)=42):poke 56835,0:if hw=0 then open 2,2,0,chr$(8)+chr$(0)
 9 poke 53280,0:poke 53281,0:print chr$(147);:gosub 2710
 10 print chr$(147);chr$(5);
 11 print "  ham commander v2.0"
@@ -10,6 +10,7 @@
 19 fb$="":fm$=""
 28 ut$="00000000":uh$="0000"
 29 s9$="                                                                                   "
+30 if hw then for i=0to145:read a:poke 49152+i,a:next:sys 49152
 31 dim ca$(20),fq$(20),mo$(20),rf$(20),sd$(20)
 35 dim xc$(20),xb$(20),xd$(20),xr$(20)
 40 dim fx(20)
@@ -18,6 +19,7 @@
 44 da$="hamlog.dat,l,"+chr$(168)
 45 su$="hamlog.sum,l,"+chr$(40)
 50 gosub 2400
+51 if hw then gosub 2870
 52 gosub 2450
 54 gosub 2480
 55 print " station: ";mc$
@@ -88,7 +90,7 @@
 212 gosub 2010
 214 if left$(rl$,6)<>"!spots" then 231
 215 sp=val(mid$(rl$,8)):if sp>20 then sp=20
-216 if sp<1 then print " no spots.":gosub 2260:return
+216 if sp<1 then gosub 2010:print " no spots.":gosub 2260:return
 217 print " loading ";sp;" spots...";
 218 for i=1 to sp
 219 gosub 2010
@@ -97,7 +99,7 @@
 222 ca$(i)=p1$:fq$(i)=p2$:mo$(i)=p3$
 223 rf$(i)=p4$
 224 sd$(i)=p5$+"|"+p6$+"|"+p7$
-225 print#2,"k"+chr$(13);
+225 s$="k"+chr$(13):gosub 2880
 226 next i
 227 gosub 2010
 229 gosub 290
@@ -528,15 +530,16 @@
 1504 print chr$(154);h$;chr$(5)
 1506 print " connecting..."
 1510 print " dialing ";sv$;":";pt$
-1511 print#2,"atdt"+sv$+":"+pt$+chr$(13);
+1511 s$="atdt"+sv$+":"+pt$+chr$(13):gosub 2880
 1512 print " connecting";
 1513 cf=0:for w=1 to 2000
-1514 get#2,a$
+1514 gosub 2890
 1515 if a$="" or a$=chr$(0) then 1518
 1516 if a$=chr$(13) and cf=1 then print:w=2000
 1517 if a$>=chr$(32) and a$<chr$(127) then print a$;:cf=1
 1518 next w
 1519 print
+1520 for w=1to200:gosub 2890:next
 1521 cm$="hello":gosub 2000
 1522 gosub 2010
 1524 if left$(rl$,3)<>"!ok" then print " connection failed":goto 1540
@@ -595,9 +598,9 @@
 1706 cm$="bye":gosub 2000
 1707 gosub 2010
 1709 for i=1 to 500:next i
-1710 print#2,"+++";
+1710 s$="+++":gosub 2880
 1711 for i=1 to 500:next i
-1712 print#2,"ath"+chr$(13);
+1712 s$="ath"+chr$(13):gosub 2880
 1713 for i=1 to 300:next i
 1715 ol=0
 1716 print " disconnected."
@@ -640,10 +643,10 @@
 1789 print#3,left$(w$,83):print#15,"p"+chr$(3)+chr$(lo)+chr$(hi)+chr$(85):print#3,mid$(w$,84)
 1790 s$=left$(p2$+"          ",10)+left$(p3$+"    ",4)+left$(p4$+"    ",4)+left$(p6$+"        ",8)+left$(p7$+"    ",4)+"599599s  "
 1791 print#15,"p"+chr$(5)+chr$(lo)+chr$(hi)+chr$(1):print#5,s$
-1792 if si<sn then print#2,"k"+chr$(13);
+1792 if si<sn then s$="k"+chr$(13):gosub 2880
 1793 if sa/10=int(sa/10) then print " stored ";sa;" of ";sn
 1794 next si:close 3:close 5:close 15
-1795 print#2,"k"+chr$(13);:gosub 2010
+1795 s$="k"+chr$(13):gosub 2880:gosub 2010
 1796 gosub 2462
 1797 print
 1798 print " sync complete: ";sa;" qsos added"
@@ -693,10 +696,10 @@
 1920 next j
 1921 close 3:close 15
 1922 return
-2000 print#2,cm$+chr$(13);
+2000 s$=cm$+chr$(13):gosub 2880
 2003 return
 2010 rl$="":rt=0
-2011 get#2,a$
+2011 gosub 2890
 2012 if a$="" or a$=chr$(0) then rt=rt+1:if rt>5000 then return
 2013 if a$="" or a$=chr$(0) then 2011
 2014 rt=0:if a$=chr$(10) then 2011
@@ -797,9 +800,9 @@
 2523 input " ";ts$:if ts$<>"" then pt$=ts$
 2524 print:print " connecting..."
 2525 print
-2527 print#2,"atdt"+sv$+":"+pt$+chr$(13);
+2527 s$="atdt"+sv$+":"+pt$+chr$(13):gosub 2880
 2528 cf=0:for w=1 to 2000
-2529 get#2,a$:if a$>=chr$(32) and a$<chr$(127) then cf=1
+2529 gosub 2890:if a$>=chr$(32) and a$<chr$(127) then cf=1
 2530 if a$=chr$(13) and cf=1 then w=2000
 2531 next w:cm$="hello":gosub 2000
 2532 gosub 2010
@@ -814,9 +817,9 @@
 2542 if mg$<>"" then print " grid: ";mg$
 2543 cm$="bye":gosub 2000:gosub 2010
 2544 for i=1 to 500:next i
-2545 print#2,"+++";
+2545 s$="+++":gosub 2880
 2546 for i=1 to 500:next i
-2547 print#2,"ath"+chr$(13);
+2547 s$="ath"+chr$(13):gosub 2880
 2548 for i=1 to 300:next i
 2549 goto 2570
 2550 print
@@ -935,3 +938,24 @@
 2739 for dw=0 to 100:next dw:get w$:if w$<>"" then 2750
 2740 next cc:goto 2737
 2750 return
+2870 br=val(bd$):bc=30:if br=300 then bc=22
+2871 if br=1200 then bc=24
+2872 if br=2400 then bc=26
+2873 if br=4800 then bc=28
+2874 if br=19200 then bc=31
+2875 poke 56835,bc:return
+2880 if hw=0 then print#2,s$;:return
+2881 for qi=1tolen(s$):poke 49392,asc(mid$(s$,qi,1)):sys 49203:next:return
+2890 if hw=0 then get#2,a$:return
+2891 sys 49217:a=peek(49392):a$="":if a>0 then a$=chr$(a)
+2892 return
+2900 data 169,0,141,1,222,173,24,3,141,244,192,173,25,3,141,245
+2901 data 192,169,0,141,240,192,141,241,192,141,242,192,120,169,113,141
+2902 data 24,3,169,192,141,25,3,88,169,30,141,3,222,169,9,141
+2903 data 2,222,96,173,1,222,41,16,240,249,173,240,192,141,0,222
+2904 data 96,173,242,192,205,241,192,240,14,174,241,192,189,0,193,141
+2905 data 240,192,232,142,241,192,96,169,0,141,240,192,96,120,173,244
+2906 data 192,141,24,3,173,245,192,141,25,3,88,169,2,141,2,222
+2907 data 96,72,138,72,173,1,222,41,8,240,17,173,0,222,174,242
+2908 data 192,157,0,193,232,142,242,192,104,170,104,64,104,170,104,108
+2909 data 244,192

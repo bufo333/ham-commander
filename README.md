@@ -10,11 +10,13 @@ A Commodore 64 ham radio logging application with local disk storage and optiona
 │  c64_hamlog.bas      │   /tmp/c64modem│  pty_bridge.py │              │ server.py│
 │                      │                └───────────────┘              └────┬─────┘
 │  1541/1581/SD2IEC    │                                                   │
-│  HAMLOG.DAT (REL)    │                                          ┌────────┴────────┐
-│  HAMLOG.SUM (REL)    │                                          │  QRZ.com API    │
-│  HAMLOG.IDX (SEQ)    │                                          │  POTA Spots API │
-│  HAMLOG.CFG (SEQ)    │                                          └─────────────────┘
-└──────────────────────┘
+│  HAMLOG.DAT (REL)    │     SwiftLink/ACIA     ┌──────────┐     WiFi     │
+│  HAMLOG.SUM (REL)    │◄──(up to 19200 baud)──►│WiFi Modem│◄────────────►│
+│  HAMLOG.IDX (SEQ)    │    $DE00 + NMI buffer  └──────────┘              │
+│  HAMLOG.CFG (SEQ)    │                                          ┌────────┴────────┐
+│                      │                                          │  QRZ.com API    │
+│                      │                                          │  POTA Spots API │
+└──────────────────────┘                                          └─────────────────┘
 ```
 
 ## Features
@@ -189,6 +191,23 @@ GSETTINGS_SCHEMA_DIR=/opt/homebrew/share/glib-2.0/schemas x64sc \
 ```
 
 ## Running on Real Hardware
+
+### SwiftLink / ACIA Modem Support (Ultimate 64, etc.)
+
+The program auto-detects a SwiftLink-compatible ACIA chip at $DE00 on startup. When detected, it loads a 146-byte NMI-driven receive buffer into $C000, allowing reliable serial communication at any baud rate up to 19200.
+
+- **Auto-detection** — Writes a test value to the ACIA control register and reads it back. Falls back to KERNAL userport RS232 if no ACIA is found (VICE compatibility).
+- **NMI receive buffer** — 256-byte ring buffer filled by interrupt, so no bytes are lost even at 9600+ baud. BASIC polling can't keep up with 9600 baud on a 1-byte ACIA buffer, so the NMI handler is essential.
+- **Configurable baud rate** — Set via F4 config editor (option 6). Supported: 300, 1200, 2400, 4800, 9600 (default), 19200.
+
+**Setup with Ultimate 64 WiFi modem:**
+
+1. Configure the modem for ACIA/SwiftLink mode at $DE00/NMI
+2. Set the modem serial speed to match your config (default 9600)
+3. Copy `hamlog.d81` to your SD card
+4. Update the server IP via F4 on the C64
+5. Start the Python server on your PC: `python3 -u server.py`
+6. Press F7 on the C64 to go online
 
 ### SD2IEC
 
