@@ -1,4 +1,4 @@
-# Ham Commander v2.0
+# Ham Commander v2.1
 
 A Commodore 64 ham radio logging application with local disk storage and optional online features via an RS232 modem connection.
 
@@ -317,6 +317,7 @@ The C64 automatically switches between disk images using SD2IEC `CD:` commands. 
 | `import_adif.py` | Imports ADIF logs into disk images (multi-disk capable) |
 | `server.py` | Asyncio TCP server (QRZ lookups, POTA spots, sync) |
 | `pty_bridge.py` | Bridges VICE RS232 PTY to TCP server |
+| `acia_driver.asm` | Documented 6502 assembly source for SwiftLink ACIA driver + ML readline |
 | `DISK_FORMAT.md` | Deep-dive technical reference for D81/D64/REL file formats |
 | `CLAUDE.md` | Developer reference (line ranges, variables, record formats) |
 

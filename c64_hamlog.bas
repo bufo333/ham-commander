@@ -1,7 +1,7 @@
 1 poke 56835,42:hw=-(peek(56835)=42):poke 56835,0:if hw=0 then open 2,2,0,chr$(8)+chr$(0)
 9 poke 53280,0:poke 53281,0:print chr$(147);:gosub 2710
 10 print chr$(147);chr$(5);
-11 print "  ham commander v2.0"
+11 print "  ham commander v2.1"
 12 print chr$(159);"  loading..."
 15 sv$="127.0.0.1":pt$="6400"
 16 mc$="n0call":bd$="1200"
@@ -10,7 +10,7 @@
 19 fb$="":fm$=""
 28 ut$="00000000":uh$="0000"
 29 s9$="                                                                                   "
-30 if hw then for i=0to145:read a:poke 49152+i,a:next:sys 49152
+30 if hw then for i=0to145:read a:poke 49152+i,a:next:for i=0to82:read a:poke 49920+i,a:next:sys 49152
 31 dim ca$(20),fq$(20),mo$(20),rf$(20),sd$(20)
 35 dim xc$(20),xb$(20),xd$(20),xr$(20)
 40 dim fx(20)
@@ -91,17 +91,18 @@
 214 if left$(rl$,6)<>"!spots" then 231
 215 sp=val(mid$(rl$,8)):if sp>20 then sp=20
 216 if sp<1 then gosub 2010:print " no spots.":gosub 2260:return
-217 print " loading ";sp;" spots...";
-218 for i=1 to sp
-219 gosub 2010
-220 gosub 240
-221 if i<1 or i>20 then 225
-222 ca$(i)=p1$:fq$(i)=p2$:mo$(i)=p3$
-223 rf$(i)=p4$
-224 sd$(i)=p5$+"|"+p6$+"|"+p7$
-225 s$="k"+chr$(13):gosub 2880
-226 next i
-227 gosub 2010
+217 gosub 2200:print chr$(159);"loading ";sp;" spots...";chr$(5)
+218 print chr$(154);h$;chr$(5)
+219 for i=1 to sp
+220 gosub 2010
+221 gosub 240
+222 if i<1 or i>20 then 226
+223 ca$(i)=p1$:fq$(i)=p2$:mo$(i)=p3$
+224 rf$(i)=p4$:sd$(i)=""
+225 print left$(p1$+"          ",10);left$(p2$+"       ",7);" ";left$(p3$+"    ",4);" ";left$(p4$+"          ",10)
+226 s$="k"+chr$(13):gosub 2880
+227 next i
+228 gosub 2010
 229 gosub 290
 231 sl=0:gosub 300
 232 return
@@ -691,21 +692,23 @@
 1914 xc$(pc)=left$(w$,10)
 1915 xb$(pc)=mid$(w$,11,4)+"|"+mid$(w$,15,4)+"|"
 1916 xd$(pc)=mid$(w$,19,8)+"|"+mid$(w$,27,4)
-1917 xr$(pc)=mid$(w$,31,3)+"|"+mid$(w$,34,3)
+1917 xr$(pc)=mid$(w$,31,3)+"|"+mid$(w$,34,3):i=pc-1:gosub 590:print ln$
 1918 if pc>=19 then j=1
 1920 next j
 1921 close 3:close 15
 1922 return
 2000 s$=cm$+chr$(13):gosub 2880
 2003 return
-2010 rl$="":rt=0
+2010 rl$="":rt=0:if hw then 2020
 2011 gosub 2890
-2012 if a$="" or a$=chr$(0) then rt=rt+1:if rt>5000 then return
+2012 if a$="" or a$=chr$(0) then rt=rt+1:if rt>2000 then return
 2013 if a$="" or a$=chr$(0) then 2011
 2014 rt=0:if a$=chr$(10) then 2011
 2015 if a$=chr$(13) then return
 2016 if len(rl$)<250 then rl$=rl$+a$
 2018 goto 2011
+2020 sys 49920:ln=peek(49392):if ln=0 then rt=rt+1:if rt<20 then 2020
+2021 for i=0toln-1:rl$=rl$+chr$(peek(49664+i)):next:return
 2200 print chr$(147);chr$(5);
 2203 print chr$(154);chr$(18);"                                       ";chr$(146)
 2205 print chr$(19);
@@ -912,7 +915,7 @@
 2712 print a$;"                                       ";b$
 2713 print a$;" ";b$;"                                     ";a$;" ";b$
 2714 print a$;" ";b$;chr$(158);"            ham commander            ";a$;" ";b$
-2715 print a$;" ";b$;chr$(155);"                v2.0                 ";a$;" ";b$
+2715 print a$;" ";b$;chr$(155);"                v2.1                 ";a$;" ";b$
 2716 print a$;" ";b$;"                                     ";a$;" ";b$
 2717 print a$;"                                       ";b$
 2718 print
@@ -959,3 +962,9 @@
 2907 data 96,72,138,72,173,1,222,41,8,240,17,173,0,222,174,242
 2908 data 192,157,0,193,232,142,242,192,104,170,104,64,104,170,104,108
 2909 data 244,192
+2910 data 162,0,160,0,140,246,192,140,247,192,173,242,192,205,241,192
+2911 data 240,46,142,248,192,172,241,192,185,0,193,200,140,241,192,174
+2912 data 248,192,160,0,140,246,192,140,247,192,201,0,240,220,201,10
+2913 data 240,216,201,13,240,25,157,0,194,232,224,250,144,204,176,15
+2914 data 238,246,192,208,197,238,247,192,173,247,192,201,64,144,187,142
+2915 data 240,192,96

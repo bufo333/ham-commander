@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Commodore 64 Ham Radio Log Server v2.0
+Commodore 64 Ham Radio Log Server v2.1
 
 Command/response server for the C64 Ham Log client.
 The C64 sends text commands; the server responds with
@@ -40,7 +40,7 @@ QRZ_LOG_URL = "https://logbook.qrz.com/api"
 POTA_URL = "https://api.pota.app/spot/activator"
 USER_AGENT = f"C64HamLog/2.0 ({MY_CALL})"
 QRZ_NS = {"q": "http://xmldata.qrz.com"}
-PROTOCOL_VERSION = "2.0"
+PROTOCOL_VERSION = "2.1"
 
 log = logging.getLogger("c64hamlog")
 
@@ -302,15 +302,15 @@ class ClientHandler:
     # ── I/O ─────────────────────────────────────────────────────
 
     async def send(self, text):
-        """Send a single line (adds CR+LF), paced for 1200 baud.
-        All text is lowercased because the C64 BASIC source is lowercased
-        during the build (tr A-Z a-z) and string comparisons are case-sensitive."""
+        """Send a single line (adds CR+LF).
+        Sends the full line as one write — the C64's NMI receive buffer (ACIA)
+        or KERNAL RS232 buffer (userport) handles the incoming data.
+        The modem/serial layer meters bytes at the configured baud rate."""
         log.debug("TX: %r", text)
         data = (text + CRLF).encode("latin-1", errors="replace")
-        for byte in data:
-            self.writer.write(bytes([byte]))
-            await self.writer.drain()
-            await asyncio.sleep(0.010)  # pacing for polling (no receive buffer)
+        self.writer.write(data)
+        await self.writer.drain()
+        await asyncio.sleep(0.05)  # 50ms gap between lines
 
     async def readline(self):
         """Read one line from client, stripping CR/LF and IP232/telnet escapes."""
@@ -439,8 +439,7 @@ class ClientHandler:
                 grid = sanitize_csv(spot.get("grid", ""))[:6]
 
                 filtered.append(
-                    f"{call},{freq},{mode},{park_ref},"
-                    f"{park_name},{location},{grid}"
+                    f"{call},{freq},{mode},{park_ref}"
                 )
 
             filtered = filtered[:20]
