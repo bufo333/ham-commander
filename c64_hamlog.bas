@@ -49,7 +49,7 @@
 87 print " loaded disk #";dn;" (";rc-dc;"/";mx;")"
 88 return
 102 get k$:if k$="" then 102
-104 if k$=chr$(133) and sp>0 then sc=1:sl=0:gosub 300:goto 102
+104 if k$=chr$(133) and sp>0 then sc=1:sl=0:gosub 290:gosub 300:goto 102
 105 if k$=chr$(133) and ol=1 then sc=1:gosub 1300:goto 102
 106 if k$=chr$(133) and ol=0 then sc=1:gosub 200:goto 102
 107 if k$=chr$(134) then sc=0:lp=0:gosub 500:goto 102
@@ -134,8 +134,7 @@
 255 p5$=p5$+c$:goto 249
 256 p6$=p6$+c$:goto 249
 257 p7$=p7$+c$:goto 249
-260 mx=fi-1:if mx<0 then mx=0
-261 if sl>=mx then return
+260 if fi<1 or sl>=fi-1 then return
 262 os=sl:sl=sl+1
 263 if sl-tp>=19 then tp=tp+1:gosub 300:return
 264 gosub 297:return
