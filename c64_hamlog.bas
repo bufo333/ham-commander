@@ -472,7 +472,8 @@
 1202 gosub 2000
 1203 gosub 2010
 1204 if left$(rl$,10)<>"!lookup,ok" then print "  not found":return
-1205 gosub 2010
+1205 gosub 240:ut$=p3$:uh$=p4$:ti$=uh$+"00"
+1206 gosub 2010
 1207 gosub 240
 1208 ln$=p2$
 1209 lg$=p7$

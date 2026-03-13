@@ -502,7 +502,8 @@ class ClientHandler:
             eqsl = "Y" if data.get("eqsl") == "1" else "N"
             dxcc = sanitize_csv(data.get("dxcc", ""))
 
-            await self.send("!LOOKUP,OK")
+            now = datetime.now(timezone.utc)
+            await self.send(f"!LOOKUP,OK,{now.strftime('%Y%m%d')},{now.strftime('%H%M')}")
             await self.send(
                 f"{call},{name},{addr},{city},{state},{country},"
                 f"{grid},{lic_class},{cqzone},{ituzone},{lotw},{eqsl},{dxcc}"
