@@ -34,7 +34,7 @@
 64 input " ";td$
 65 if td$<>"" then ut$=td$
 66 if td$<>"" then print " enter utc time (hhmm):"
-67 if td$<>"" then input " ";th$:uh$=th$
+67 if td$<>"" then input " ";th$:uh$=th$:ti$=uh$+"00"
 68 print
 69 print " press any key..."
 70 get w$:if w$="" then 70
@@ -367,7 +367,7 @@
 1019 if nf$="" then input "  freq khz: ";nf$
 1020 if nf$<>"" then print "  freq khz: ";nf$
 1021 print
-1023 nd$=ut$:nt$=uh$
+1023 nd$=ut$:nt$=left$(ti$,4)
 1024 print "  date yyyymmdd [";nd$;"]: ";
 1025 input "";td$
 1026 if td$<>"" then nd$=td$
@@ -557,7 +557,7 @@
 1522 gosub 2010
 1524 if left$(rl$,3)<>"!ok" then print " connection failed":goto 1540
 1526 gosub 240
-1529 ut$=p4$:uh$=p5$
+1529 ut$=p4$:uh$=p5$:ti$=uh$+"00"
 1530 ol=1
 1531 print " online! utc: ";ut$;" ";uh$
 1532 print
@@ -825,7 +825,7 @@
 2531 next w:cm$="hello":gosub 2000
 2532 gosub 2010
 2533 if left$(rl$,3)<>"!ok" then print " connect failed":goto 2550
-2534 gosub 240:ut$=p4$:uh$=p5$
+2534 gosub 240:ut$=p4$:uh$=p5$:ti$=uh$+"00"
 2536 cm$="lookup,"+mc$:gosub 2000
 2537 gosub 2010
 2538 if left$(rl$,10)<>"!lookup,ok" then print " not found on qrz":goto 2550
