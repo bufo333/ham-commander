@@ -566,7 +566,11 @@ class ClientHandler:
             call = sanitize_csv(rec.get("call", ""))
             band = sanitize_csv(rec.get("band", ""))
             mode = sanitize_csv(rec.get("mode", ""))
-            freq = sanitize_csv(rec.get("freq", ""))
+            freq_raw = rec.get("freq", "")
+            try:
+                freq = sanitize_csv(f"{float(freq_raw) * 1000:.2f}")
+            except (ValueError, TypeError):
+                freq = sanitize_csv(freq_raw)
             date = sanitize_csv(rec.get("qso_date", ""))
             time = sanitize_csv(rec.get("time_on", ""))[:4]
             rsts = sanitize_csv(rec.get("rst_sent", ""))
@@ -626,7 +630,10 @@ class ClientHandler:
             rst_rcvd=rstr,
         )
         if freq:
-            fields["freq"] = freq
+            try:
+                fields["freq"] = f"{float(freq) / 1000:.5f}"
+            except ValueError:
+                fields["freq"] = freq
         if comment:
             fields["comment"] = comment
 
