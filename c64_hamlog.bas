@@ -375,9 +375,9 @@
 1028 input "";tt$
 1029 if tt$<>"" then nt$=tt$
 1031 rs$="599":rr$="599"
-1032 input "  rst sent [599]: ";tr$
+1032 tr$="":input "  rst sent [599]: ";tr$
 1033 if tr$<>"" then rs$=tr$
-1034 input "  rst rcvd [599]: ";tr$
+1034 tr$="":input "  rst rcvd [599]: ";tr$
 1035 if tr$<>"" then rr$=tr$
 1037 co$=""
 1038 input "  comment: ";co$
